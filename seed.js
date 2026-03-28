@@ -213,11 +213,46 @@
         });
     }
 
+    // --- GERAR PARCELAS FUTURAS ---
+    // Para cada despesa com parcelas (ex: "2/10"), gerar os meses seguintes
+    const baseExpenses = [...expenses];
+    baseExpenses.forEach(e => {
+        if (!e.installments || !e.installments.includes('/')) return;
+        const parts = e.installments.split('/');
+        const current = parseInt(parts[0]);
+        const total = parseInt(parts[1]);
+        if (isNaN(current) || isNaN(total) || current >= total) return;
+
+        const baseDate = new Date(e.date + 'T00:00:00');
+        const baseDay = baseDate.getDate();
+
+        for (let i = 1; i <= (total - current); i++) {
+            let futureMonth = baseDate.getMonth() + i;
+            let futureYear = baseDate.getFullYear();
+            while (futureMonth > 11) { futureMonth -= 12; futureYear++; }
+            const mm = String(futureMonth + 1).padStart(2, '0');
+            const dd = String(Math.min(baseDay, 28)).padStart(2, '0');
+
+            expenses.push({
+                id: e.id + '_p' + (current + i),
+                date: `${futureYear}-${mm}-${dd}`,
+                value: e.value,
+                bank: e.bank,
+                paymentType: e.paymentType,
+                category: e.category,
+                installments: `${current + i}/${total}`,
+                description: e.description,
+                memberId: e.memberId,
+                status: '',
+            });
+        }
+    });
+
     // --- SALVAR TUDO ---
     localStorage.setItem('pg_members', JSON.stringify(members));
     localStorage.setItem('pg_incomes', JSON.stringify(incomes));
     localStorage.setItem('pg_expenses', JSON.stringify(expenses));
     localStorage.setItem('pg_budgets', JSON.stringify(budgets));
 
-    console.log('ProntoGestão: Dados iniciais carregados da planilha!');
+    console.log('ProntoGestão: Dados iniciais carregados da planilha! (' + expenses.length + ' despesas geradas)');
 })();
