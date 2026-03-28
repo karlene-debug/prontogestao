@@ -60,8 +60,22 @@
             </div>
         </aside>
 
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Main Content -->
         <main class="main-content" id="mainContent">
+
+            <!-- Mobile Header -->
+            <div class="mobile-bar" id="mobileBar">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">&#9776;</button>
+                <span class="mobile-logo">Pronto<span>Gestão</span></span>
+                <div class="mobile-month">
+                    <button id="prevMonthMobile" class="month-nav-sm">&lt;</button>
+                    <span id="currentMonthMobile">Mar 2026</span>
+                    <button id="nextMonthMobile" class="month-nav-sm">&gt;</button>
+                </div>
+            </div>
 
             <!-- DASHBOARD -->
             <section class="page active" id="page-dashboard">
@@ -131,10 +145,24 @@
                     <div class="group-chart" id="groupChart"></div>
                 </div>
 
-                <!-- Gastos por Forma de Pagamento -->
+                <div class="dashboard-grid-2">
+                    <!-- Gastos por Forma de Pagamento -->
+                    <div class="card">
+                        <h3>Forma de Pagamento</h3>
+                        <div class="payment-chart" id="paymentChart"></div>
+                    </div>
+
+                    <!-- Top Gastos do Mês -->
+                    <div class="card">
+                        <h3>Top 10 Gastos do Mês</h3>
+                        <div class="top-expenses" id="topExpenses"></div>
+                    </div>
+                </div>
+
+                <!-- Evolução Mensal -->
                 <div class="card">
-                    <h3>Forma de Pagamento</h3>
-                    <div class="payment-chart" id="paymentChart"></div>
+                    <h3>Evolução Mensal (últimos 6 meses)</h3>
+                    <div class="evolution-chart" id="evolutionChart"></div>
                 </div>
             </section>
 

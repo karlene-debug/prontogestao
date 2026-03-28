@@ -380,6 +380,108 @@ body {
     display: block;
 }
 
+/* ---- DASHBOARD GRID ---- */
+.dashboard-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+@media (max-width: 768px) {
+    .dashboard-grid-2 { grid-template-columns: 1fr; }
+}
+.dashboard-grid-2 .card { margin-bottom: 0; }
+
+/* ---- TOP EXPENSES ---- */
+.top-expenses { display: flex; flex-direction: column; gap: 8px; }
+.top-expense-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+}
+.top-expense-item .top-rank {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+.top-expense-item .top-desc {
+    flex: 1;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 8px;
+}
+.top-expense-item .top-cat {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-right: 12px;
+    white-space: nowrap;
+}
+.top-expense-item .top-val {
+    font-weight: 700;
+    color: var(--expense);
+    white-space: nowrap;
+}
+
+/* ---- EVOLUTION CHART ---- */
+.evolution-chart {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    align-items: end;
+    min-height: 180px;
+}
+.evo-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.evo-bars {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+    height: 120px;
+    width: 100%;
+    justify-content: center;
+}
+.evo-bar {
+    width: 20px;
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.5s ease;
+}
+.evo-bar.income-bar { background: var(--income); }
+.evo-bar.expense-bar { background: var(--expense); }
+.evo-month-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+.evo-values {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.4;
+}
+@media (max-width: 480px) {
+    .evolution-chart { grid-template-columns: repeat(3, 1fr); }
+}
+
 /* ---- TABLES ---- */
 .table-container { overflow-x: auto; }
 
@@ -630,6 +732,72 @@ body {
     gap: 12px;
 }
 
+/* ---- MOBILE BAR ---- */
+.mobile-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+.mobile-menu-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mobile-menu-btn:hover { background: var(--bg-hover); }
+.mobile-logo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.mobile-logo span { color: var(--accent); }
+.mobile-month {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.month-nav-sm {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.month-nav-sm:hover { background: var(--bg-hover); }
+#currentMonthMobile {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 60px;
+    text-align: center;
+}
+
+/* ---- SIDEBAR OVERLAY ---- */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+.sidebar-overlay.open { display: block; }
+
 /* ---- RESPONSIVE ---- */
 @media (max-width: 768px) {
     .sidebar {
@@ -643,14 +811,7 @@ body {
         margin-left: 0;
         padding: 16px;
     }
-
-    .mobile-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 0;
-        margin-bottom: 12px;
-    }
+    .mobile-bar { display: flex; }
 
     .summary-cards { grid-template-columns: 1fr; }
     .golden-rule { grid-template-columns: repeat(2, 1fr); }

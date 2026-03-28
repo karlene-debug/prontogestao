@@ -83,7 +83,7 @@
         navBtns.forEach(b => {
             b.classList.toggle('active', b.dataset.page === page);
         });
-        sidebar.classList.remove('open');
+        closeSidebar();
         renderCurrentPage();
     }
 
@@ -92,28 +92,50 @@
     });
 
     // --- Sidebar Toggle (Mobile) ---
-    $('sidebarToggle').addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-    });
+    const sidebarOverlay = $('sidebarOverlay');
 
-    // --- Month Navigation ---
-    function updateMonthDisplay() {
-        $('currentMonth').textContent = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
+    function openSidebar() {
+        sidebar.classList.add('open');
+        sidebarOverlay.classList.add('open');
+    }
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('open');
     }
 
-    $('prevMonth').addEventListener('click', () => {
+    $('sidebarToggle').addEventListener('click', () => {
+        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+    });
+    $('mobileMenuBtn').addEventListener('click', openSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
+    // --- Month Navigation ---
+    const SHORT_MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+    function updateMonthDisplay() {
+        $('currentMonth').textContent = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
+        const mobileEl = $('currentMonthMobile');
+        if (mobileEl) mobileEl.textContent = SHORT_MONTHS[state.currentMonth] + ' ' + state.currentYear;
+    }
+
+    function prevMonth() {
         state.currentMonth--;
         if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
         updateMonthDisplay();
         renderCurrentPage();
-    });
+    }
 
-    $('nextMonth').addEventListener('click', () => {
+    function nextMonth() {
         state.currentMonth++;
         if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
         updateMonthDisplay();
         renderCurrentPage();
-    });
+    }
+
+    $('prevMonth').addEventListener('click', prevMonth);
+    $('nextMonth').addEventListener('click', nextMonth);
+    $('prevMonthMobile').addEventListener('click', prevMonth);
+    $('nextMonthMobile').addEventListener('click', nextMonth);
 
     // --- Member Filter ---
     function populateMemberFilter() {
@@ -176,15 +198,19 @@
         });
 
         const condItems = [
-            { key: 'Necessidade', bar: 'ruleNeedBar', pctEl: 'ruleNeedPct' },
-            { key: 'Desejo', bar: 'ruleWantBar', pctEl: 'ruleWantPct' },
-            { key: 'Financeiro', bar: 'ruleFinBar', pctEl: 'ruleFinPct' },
-            { key: 'Dívidas', bar: 'ruleDebtBar', pctEl: 'ruleDebtPct' },
+            { key: 'Necessidade', bar: 'ruleNeedBar', pctEl: 'ruleNeedPct', target: 50 },
+            { key: 'Desejo', bar: 'ruleWantBar', pctEl: 'ruleWantPct', target: 30 },
+            { key: 'Financeiro', bar: 'ruleFinBar', pctEl: 'ruleFinPct', target: 20 },
+            { key: 'Dívidas', bar: 'ruleDebtBar', pctEl: 'ruleDebtPct', target: 0 },
         ];
         condItems.forEach(ci => {
             const p = totalOut > 0 ? pct(byCondition[ci.key], totalOut) : 0;
+            const overBudget = ci.target > 0 && p > ci.target;
             $(ci.pctEl).textContent = p + '%';
+            $(ci.pctEl).style.color = overBudget ? 'var(--expense)' : '';
             $(ci.bar).style.width = Math.min(p, 100) + '%';
+            if (overBudget) $(ci.bar).style.opacity = '0.85';
+            else $(ci.bar).style.opacity = '1';
         });
 
         // Gastos por Grupo
@@ -220,7 +246,64 @@
                 <span class="pay-value">${currency(v)}</span>
                 <span class="pay-pct">${pct(v, totalOut)}%</span>
             </div>
-        `).join('');
+        `).join('') || '<p style="color:var(--text-muted);text-align:center;padding:20px">Sem dados</p>';
+
+        // Top 10 Gastos
+        const sorted = [...expenses].sort((a, b) => Number(b.value) - Number(a.value)).slice(0, 10);
+        $('topExpenses').innerHTML = sorted.map((e, i) => `
+            <div class="top-expense-item">
+                <span class="top-rank">${i + 1}</span>
+                <span class="top-desc">${e.description || '-'}</span>
+                <span class="top-cat">${e.category || ''}</span>
+                <span class="top-val">${currency(e.value)}</span>
+            </div>
+        `).join('') || '<p style="color:var(--text-muted);text-align:center;padding:20px">Sem dados</p>';
+
+        // Evolução Mensal (últimos 6 meses)
+        renderEvolution();
+    }
+
+    function renderEvolution() {
+        const allIncomes = filterByMember(getIncomes());
+        const allExpenses = filterByMember(getExpenses());
+        const months = [];
+
+        for (let i = 5; i >= 0; i--) {
+            let m = state.currentMonth - i;
+            let y = state.currentYear;
+            while (m < 0) { m += 12; y--; }
+            months.push({ month: m, year: y });
+        }
+
+        const data = months.map(({ month, year }) => {
+            const inc = allIncomes.filter(i => {
+                const d = new Date(i.date + 'T00:00:00');
+                return d.getMonth() === month && d.getFullYear() === year;
+            }).reduce((s, i) => s + Number(i.value), 0);
+
+            const exp = allExpenses.filter(e => {
+                const d = new Date(e.date + 'T00:00:00');
+                return d.getMonth() === month && d.getFullYear() === year;
+            }).reduce((s, e) => s + Number(e.value), 0);
+
+            return { month, year, income: inc, expense: exp };
+        });
+
+        const maxVal = Math.max(...data.map(d => Math.max(d.income, d.expense)), 1);
+
+        $('evolutionChart').innerHTML = data.map(d => {
+            const incH = Math.round((d.income / maxVal) * 120);
+            const expH = Math.round((d.expense / maxVal) * 120);
+            return `<div class="evo-col">
+                <div class="evo-bars">
+                    <div class="evo-bar income-bar" style="height:${incH}px" title="Receita: ${currency(d.income)}"></div>
+                    <div class="evo-bar expense-bar" style="height:${expH}px" title="Despesa: ${currency(d.expense)}"></div>
+                </div>
+                <span class="evo-month-label">${SHORT_MONTHS[d.month]}/${String(d.year).slice(2)}</span>
+                <span class="evo-values" style="color:var(--income)">${d.income > 0 ? (d.income/1000).toFixed(1)+'k' : '-'}</span>
+                <span class="evo-values" style="color:var(--expense)">${d.expense > 0 ? (d.expense/1000).toFixed(1)+'k' : '-'}</span>
+            </div>`;
+        }).join('');
     }
 
     // ============================================================

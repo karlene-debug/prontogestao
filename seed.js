@@ -127,8 +127,46 @@
         { id: 'exp_077', date: '2026-03-06', value: 4.10, bank: 'Itaú', paymentType: 'Crédito', category: 'Juros e Tarifas', installments: '', description: 'IOF', memberId: MEMBER_1, status: 'Pg' },
         { id: 'exp_078', date: '2026-03-06', value: 7.99, bank: 'Itaú', paymentType: 'Crédito', category: 'Juros e Tarifas', installments: '', description: 'Envio de msg', memberId: MEMBER_1, status: 'Pg' },
 
-        // Janeiro 2026 - Internet
+        // Janeiro 2026 - fixas
         { id: 'exp_100', date: '2026-01-05', value: 139.99, bank: 'BB', paymentType: 'Pix', category: 'Internet/Celular', installments: '', description: 'Vivo', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_101', date: '2026-01-10', value: 3842.45, bank: 'Itaú', paymentType: 'Crédito', category: 'Mensalidade/Transp. Escolar/Lanche', installments: '', description: 'Colégio Novo', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_102', date: '2026-01-05', value: 583.61, bank: 'Nubank', paymentType: 'Boleto', category: 'Aluguel/Condomínio/IPTU', installments: '', description: 'Condomínio', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_103', date: '2026-01-08', value: 274.96, bank: 'BB', paymentType: 'Pix', category: 'Contas de Consumo', installments: '', description: 'CPFL Energia', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_104', date: '2026-01-15', value: 756.92, bank: 'BB', paymentType: 'Pix', category: 'Obrigações Tributárias', installments: '', description: 'Prolabore', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_105', date: '2026-01-15', value: 270.00, bank: 'BB', paymentType: 'Pix', category: 'Obrigações Tributárias', installments: '', description: 'DAS', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_106', date: '2026-01-12', value: 210.00, bank: 'BB', paymentType: 'Pix', category: 'Manutenção da Casa', installments: '', description: 'Piscineiro', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_107', date: '2026-01-20', value: 386.00, bank: 'Itaú', paymentType: 'Crédito', category: 'Plano de Saúde/Seguro de Vida', installments: '', description: 'MetLife', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_108', date: '2026-01-06', value: 604.98, bank: 'Itaú', paymentType: 'Crédito', category: 'Supermercado', installments: '', description: 'Assaí Atacadista', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_109', date: '2026-01-18', value: 245.00, bank: 'Itaú', paymentType: 'Crédito', category: 'Combustível', installments: '', description: 'Posto Shell', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_110', date: '2026-01-25', value: 242.00, bank: 'Itaú', paymentType: 'Crédito', category: 'Combustível', installments: '', description: 'Posto Ipiranga', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_111', date: '2026-01-07', value: 44.90, bank: 'Itaú', paymentType: 'Crédito', category: 'Assinaturas/Streaming', installments: '', description: 'Netflix', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_112', date: '2026-01-10', value: 1890.00, bank: 'Nubank', paymentType: 'Pix', category: 'Serviços Domésticos', installments: '', description: 'Angela (doméstica)', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_113', date: '2026-01-22', value: 350.00, bank: 'BB', paymentType: 'Pix', category: 'Serviços Domésticos', installments: '', description: 'Fátima Aparecida', memberId: MEMBER_1, status: 'Pg' },
+
+        // Fevereiro 2026 - fixas
+        { id: 'exp_200', date: '2026-02-05', value: 139.99, bank: 'BB', paymentType: 'Pix', category: 'Internet/Celular', installments: '', description: 'Vivo', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_201', date: '2026-02-10', value: 3842.45, bank: 'Itaú', paymentType: 'Crédito', category: 'Mensalidade/Transp. Escolar/Lanche', installments: '', description: 'Colégio Novo', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_202', date: '2026-02-05', value: 583.61, bank: 'Nubank', paymentType: 'Boleto', category: 'Aluguel/Condomínio/IPTU', installments: '', description: 'Condomínio', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_203', date: '2026-02-08', value: 180.69, bank: 'BB', paymentType: 'Pix', category: 'Contas de Consumo', installments: '', description: 'CPFL Energia', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_204', date: '2026-02-15', value: 756.92, bank: 'BB', paymentType: 'Pix', category: 'Obrigações Tributárias', installments: '', description: 'Prolabore', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_205', date: '2026-02-15', value: 270.00, bank: 'BB', paymentType: 'Pix', category: 'Obrigações Tributárias', installments: '', description: 'DAS', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_206', date: '2026-02-12', value: 210.00, bank: 'BB', paymentType: 'Pix', category: 'Manutenção da Casa', installments: '', description: 'Piscineiro', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_207', date: '2026-02-20', value: 386.00, bank: 'Itaú', paymentType: 'Crédito', category: 'Plano de Saúde/Seguro de Vida', installments: '', description: 'MetLife', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_208', date: '2026-02-06', value: 722.07, bank: 'Itaú', paymentType: 'Crédito', category: 'Supermercado', installments: '', description: 'Assaí Atacadista', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_209', date: '2026-02-10', value: 327.74, bank: 'Itaú', paymentType: 'Crédito', category: 'Supermercado', installments: '', description: 'Savegnago', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_210', date: '2026-02-18', value: 290.68, bank: 'Itaú', paymentType: 'Crédito', category: 'Combustível', installments: '', description: 'Cgterra', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_211', date: '2026-02-25', value: 255.29, bank: 'Itaú', paymentType: 'Crédito', category: 'Combustível', installments: '', description: 'Posto Shell', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_212', date: '2026-02-07', value: 44.90, bank: 'Itaú', paymentType: 'Crédito', category: 'Assinaturas/Streaming', installments: '', description: 'Netflix', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_213', date: '2026-02-07', value: 21.90, bank: 'Itaú', paymentType: 'Crédito', category: 'Assinaturas/Streaming', installments: '', description: 'Spotify', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_214', date: '2026-02-10', value: 1890.00, bank: 'Nubank', paymentType: 'Pix', category: 'Serviços Domésticos', installments: '', description: 'Angela (doméstica)', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_215', date: '2026-02-14', value: 219.12, bank: 'Itaú', paymentType: 'Crédito', category: 'Documentação e Seguro', installments: '', description: 'Bradesco Seguro', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_216', date: '2026-02-16', value: 82.95, bank: 'BB', paymentType: 'Pix', category: 'Contas de Consumo', installments: '', description: 'Saerp Água', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_217', date: '2026-02-20', value: 209.90, bank: 'Itaú', paymentType: 'Crédito', category: 'Cuidados Pessoais', installments: '', description: 'TotalPass', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_218', date: '2026-02-22', value: 250.00, bank: 'BB', paymentType: 'Pix', category: 'Serviços Domésticos', installments: '', description: 'Fátima Aparecida', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_219', date: '2026-02-28', value: 1716.00, bank: 'Itaú', paymentType: 'Crédito', category: 'Viagens', installments: '', description: 'Airbnb', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_220', date: '2026-02-14', value: 344.66, bank: 'Itaú', paymentType: 'Crédito', category: 'Ingressos e Passeios', installments: '', description: 'Rodeio - Total Acesso', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_221', date: '2026-02-14', value: 344.66, bank: 'Itaú', paymentType: 'Crédito', category: 'Ingressos e Passeios', installments: '', description: 'Rodeio - Total Acesso', memberId: MEMBER_1, status: 'Pg' },
+        { id: 'exp_222', date: '2026-02-15', value: 409.84, bank: 'Itaú', paymentType: 'Crédito', category: 'Pedágios/Estacionamentos/Multas', installments: '', description: 'Sem Parar', memberId: MEMBER_1, status: 'Pg' },
     ];
 
     // --- ORÇAMENTOS ANUAIS (baseado na aba Orçado x Realizado) ---
