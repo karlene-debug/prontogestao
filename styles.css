@@ -502,6 +502,12 @@ body {
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
+.data-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+}
+.data-table th.sortable:hover { color: var(--accent); }
 .data-table td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--border);
@@ -526,6 +532,40 @@ body {
 }
 .status-badge.paid { background: var(--income-bg); color: var(--income); }
 .status-badge.pending { background: rgba(253, 203, 110, 0.15); color: var(--warning); }
+
+/* Recurrence badges */
+.rec-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.rec-badge.recorrente { background: rgba(108,92,231,0.15); color: var(--accent); }
+.rec-badge.parcelada { background: rgba(0,206,201,0.15); color: #00cec9; }
+.rec-badge.avulsa { background: rgba(139,143,163,0.1); color: var(--text-muted); }
+
+/* Confirm button */
+.btn-status {
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--warning);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font);
+    white-space: nowrap;
+}
+.btn-status:hover { border-color: var(--income); color: var(--income); }
+.btn-status.confirmed {
+    background: var(--income-bg);
+    border-color: var(--income);
+    color: var(--income);
+}
+.btn-status.confirmed:hover { opacity: 0.8; }
 
 .variation-positive { color: var(--income); }
 .variation-negative { color: var(--expense); }

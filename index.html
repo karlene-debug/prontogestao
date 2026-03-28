@@ -176,28 +176,27 @@
             <section class="page" id="page-entradas">
                 <header class="page-header">
                     <h2>Entradas</h2>
-                    <button class="btn-primary" id="btnAddIncome">+ Nova Entrada</button>
+                    <div class="header-actions">
+                        <div class="filter-group">
+                            <select id="filterIncCat" class="filter-select"><option value="all">Todas as Categorias</option></select>
+                            <select id="filterIncBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
+                            <select id="filterIncType" class="filter-select">
+                                <option value="all">Todos os Tipos</option>
+                                <option value="recorrente">Recorrente</option>
+                                <option value="parcelada">Parcelada</option>
+                                <option value="avulsa">Avulsa</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" id="btnAddIncome">+ Nova Entrada</button>
+                    </div>
                 </header>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Banco</th>
-                                <th>Valor</th>
-                                <th>Categoria</th>
-                                <th>Fonte</th>
-                                <th>Membro</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
+                        <thead id="incomeHead"></thead>
                         <tbody id="incomeTable"></tbody>
                     </table>
                 </div>
-                <div class="table-total">
-                    Total: <strong id="incomeTotalTable">R$ 0</strong>
-                </div>
+                <div class="table-total" id="incomeSummary"></div>
             </section>
 
             <!-- SAIDAS -->
@@ -216,26 +215,11 @@
                 </header>
                 <div class="table-container">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Banco</th>
-                                <th>Tipo Pgto</th>
-                                <th>Data</th>
-                                <th>Valor</th>
-                                <th>Parcelas</th>
-                                <th>Estabelecimento</th>
-                                <th>Plano de Contas</th>
-                                <th>Membro</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
+                        <thead id="expenseHead"></thead>
                         <tbody id="expenseTable"></tbody>
                     </table>
                 </div>
-                <div class="table-total">
-                    Total: <strong id="expenseTotalTable">R$ 0</strong>
-                </div>
+                <div class="table-total" id="expenseSummary"></div>
             </section>
 
             <!-- ORCADO x REALIZADO -->

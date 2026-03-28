@@ -16,6 +16,8 @@
     ];
 
     // --- ENTRADAS 2026 (12 meses x 2 fontes) ---
+    const parentRP = 'rec_rp_2026';
+    const parentPA = 'rec_pa_2026';
     const incomes = [];
     for (let m = 0; m < 12; m++) {
         const mm = String(m + 1).padStart(2, '0');
@@ -30,6 +32,11 @@
             source: 'Atlas',
             memberId: MEMBER_1,
             status: status,
+            recurrenceType: 'recorrente',
+            recurrenceDay: 1,
+            recurrenceTotal: null,
+            recurrenceParent: parentRP,
+            installmentLabel: '',
         });
         incomes.push({
             id: 'inc_pa_' + mm,
@@ -40,6 +47,11 @@
             source: '',
             memberId: MEMBER_1,
             status: status,
+            recurrenceType: 'recorrente',
+            recurrenceDay: 1,
+            recurrenceTotal: null,
+            recurrenceParent: parentPA,
+            installmentLabel: '',
         });
     }
 

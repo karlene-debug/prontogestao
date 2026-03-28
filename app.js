@@ -21,6 +21,7 @@
         memberFilter: 'all',
         editingId: null,
         editingType: null,
+        sort: {}, // { tableName: { field: 'date', dir: 'asc' } }
     };
 
     // --- Helpers ---
@@ -32,6 +33,28 @@
         return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     function pct(part, total) { return total === 0 ? 0 : Math.round((part / total) * 100); }
+
+    // --- Sorting ---
+    function sortItems(items, tableName, defaultField) {
+        const s = state.sort[tableName];
+        if (!s) return items;
+        const field = s.field;
+        const dir = s.dir === 'asc' ? 1 : -1;
+        return [...items].sort((a, b) => {
+            let va = a[field], vb = b[field];
+            if (field === 'value') { va = Number(va) || 0; vb = Number(vb) || 0; return (va - vb) * dir; }
+            if (field === 'date') { return ((va || '') > (vb || '') ? 1 : -1) * dir; }
+            va = String(va || '').toLowerCase(); vb = String(vb || '').toLowerCase();
+            return va.localeCompare(vb) * dir;
+        });
+    }
+
+    function sortHeader(tableName, field, label) {
+        const s = state.sort[tableName];
+        const isActive = s && s.field === field;
+        const arrow = isActive ? (s.dir === 'asc' ? ' &#9650;' : ' &#9660;') : ' <span style="opacity:0.3">&#9650;</span>';
+        return `<th class="sortable" onclick="App.toggleSort('${tableName}','${field}')">${label}${arrow}</th>`;
+    }
     function dateStr(d) {
         if (!d) return '';
         const dt = new Date(d + 'T00:00:00');
@@ -310,29 +333,69 @@
     // ENTRADAS
     // ============================================================
     function renderEntradas() {
-        const incomes = filterByMember(filterByMonth(getIncomes(), 'date'));
+        let incomes = filterByMember(filterByMonth(getIncomes(), 'date'));
         const members = getMembers();
+
+        // Populate filters
+        const cats = [...new Set(getIncomes().map(i => i.category).filter(Boolean))];
+        const banks = [...new Set(getIncomes().map(i => i.bank).filter(Boolean))];
+        populateSelect($('filterIncCat'), cats, 'Todas as Categorias');
+        populateSelect($('filterIncBank'), banks, 'Todos os Bancos');
+
+        // Apply filters
+        const catF = $('filterIncCat').value;
+        const bankF = $('filterIncBank').value;
+        const typeF = $('filterIncType').value;
+        if (catF !== 'all') incomes = incomes.filter(i => i.category === catF);
+        if (bankF !== 'all') incomes = incomes.filter(i => i.bank === bankF);
+        if (typeF !== 'all') incomes = incomes.filter(i => (i.recurrenceType || 'avulsa') === typeF);
+
+        // Sort
+        incomes = sortItems(incomes, 'incomes', 'date');
+
         const total = incomes.reduce((s, i) => s + Number(i.value), 0);
+        const received = incomes.filter(i => i.status === 'Pg').reduce((s, i) => s + Number(i.value), 0);
+        const pending = total - received;
+
+        // Sortable headers
+        $('incomeHead').innerHTML = `<tr>
+            ${sortHeader('incomes', 'date', 'Data')}
+            ${sortHeader('incomes', 'bank', 'Banco')}
+            ${sortHeader('incomes', 'value', 'Valor')}
+            ${sortHeader('incomes', 'category', 'Categoria')}
+            ${sortHeader('incomes', 'source', 'Fonte')}
+            ${sortHeader('incomes', 'recurrenceType', 'Tipo')}
+            <th>Membro</th>
+            <th>Recebimento</th>
+            <th>Ações</th>
+        </tr>`;
 
         $('incomeTable').innerHTML = incomes.map(i => {
             const member = members.find(m => m.id === i.memberId);
+            const typeLabel = i.recurrenceType === 'recorrente' ? '<span class="rec-badge recorrente">Recorrente</span>'
+                : i.recurrenceType === 'parcelada' ? `<span class="rec-badge parcelada">${i.installmentLabel || 'Parcelada'}</span>`
+                : '<span class="rec-badge avulsa">Avulsa</span>';
             return `<tr>
                 <td>${dateStr(i.date)}</td>
                 <td>${i.bank || '-'}</td>
                 <td style="font-weight:600;color:var(--income)">${currency(i.value)}</td>
                 <td>${i.category || '-'}</td>
                 <td>${i.source || '-'}</td>
+                <td>${typeLabel}</td>
                 <td>${member ? member.name : '-'}</td>
-                <td><span class="status-badge ${i.status === 'Pg' ? 'paid' : 'pending'}">${i.status === 'Pg' ? 'Pago' : 'Pendente'}</span></td>
+                <td>
+                    <button class="btn-status ${i.status === 'Pg' ? 'confirmed' : ''}" onclick="App.toggleIncomeStatus('${i.id}')" title="${i.status === 'Pg' ? 'Recebido - clique para desfazer' : 'Clique para confirmar recebimento'}">
+                        ${i.status === 'Pg' ? '&#10003; Recebido' : '&#9711; Confirmar'}
+                    </button>
+                </td>
                 <td>
                     <button class="btn-icon" onclick="App.editIncome('${i.id}')" title="Editar">&#9998;</button>
-                    <button class="btn-icon" onclick="App.duplicateIncome('${i.id}')" title="Duplicar">&#10697;</button>
                     <button class="btn-icon delete" onclick="App.deleteIncome('${i.id}')" title="Excluir">&#10005;</button>
                 </td>
             </tr>`;
-        }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
+        }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
 
-        $('incomeTotalTable').textContent = currency(total);
+        $('incomeSummary').innerHTML = `Total: <strong>${currency(total)}</strong> <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:12px">Recebido: <span style="color:var(--income)">${currency(received)}</span> | Pendente: <span style="color:var(--warning)">${currency(pending)}</span></span>`;
     }
 
     // ============================================================
@@ -378,6 +441,23 @@
         }).reduce((s, e) => s + Number(e.value), 0);
         const variavel = total - fixo;
 
+        // Sort
+        expenses = sortItems(expenses, 'expenses', 'date');
+
+        // Sortable headers
+        $('expenseHead').innerHTML = `<tr>
+            ${sortHeader('expenses', 'bank', 'Banco')}
+            ${sortHeader('expenses', 'paymentType', 'Tipo Pgto')}
+            ${sortHeader('expenses', 'date', 'Data')}
+            ${sortHeader('expenses', 'value', 'Valor')}
+            ${sortHeader('expenses', 'installments', 'Parcelas')}
+            ${sortHeader('expenses', 'description', 'Estabelecimento')}
+            ${sortHeader('expenses', 'category', 'Plano de Contas')}
+            <th>Membro</th>
+            ${sortHeader('expenses', 'status', 'Status')}
+            <th>Ações</th>
+        </tr>`;
+
         $('expenseTable').innerHTML = expenses.map(e => {
             const member = members.find(m => m.id === e.memberId);
             return `<tr>
@@ -398,7 +478,7 @@
             </tr>`;
         }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma saída neste mês</td></tr>';
 
-        $('expenseTotalTable').innerHTML = `${currency(total)} <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:12px">Fixo: ${currency(fixo)} | Variável: ${currency(variavel)}</span>`;
+        $('expenseSummary').innerHTML = `Total: <strong>${currency(total)}</strong> <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:12px">Fixo: ${currency(fixo)} | Variável: ${currency(variavel)}</span>`;
     }
 
     function populateSelect(el, options, placeholder) {
@@ -547,19 +627,38 @@
         const members = getMembers();
         const isEdit = !!income;
         const i = income || {};
+        const isGenerated = i.recurrenceParent;
 
         const body = `
             <div class="form-row">
                 <div class="form-group">
-                    <label>Data</label>
-                    <input type="date" id="fIncDate" value="${i.date || ''}">
+                    <label>Tipo de Receita</label>
+                    <select id="fIncType" ${isGenerated ? 'disabled' : ''}>
+                        <option value="avulsa" ${(!i.recurrenceType || i.recurrenceType === 'avulsa') ? 'selected' : ''}>Avulsa (única)</option>
+                        <option value="recorrente" ${i.recurrenceType === 'recorrente' ? 'selected' : ''}>Recorrente (todo mês)</option>
+                        <option value="parcelada" ${i.recurrenceType === 'parcelada' ? 'selected' : ''}>Parcelada (X vezes)</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Valor</label>
                     <input type="number" step="0.01" id="fIncValue" value="${i.value || ''}" placeholder="0,00">
                 </div>
             </div>
-            <div class="form-row">
+            <div class="form-row" id="recurrenceRow" style="display:none">
+                <div class="form-group">
+                    <label>Dia do Recebimento</label>
+                    <input type="number" min="1" max="31" id="fIncDay" value="${i.recurrenceDay || ''}" placeholder="Ex: 5">
+                </div>
+                <div class="form-group" id="installmentGroup" style="display:none">
+                    <label>Quantidade de Parcelas</label>
+                    <input type="number" min="1" max="60" id="fIncInstallments" value="${i.recurrenceTotal || ''}" placeholder="Ex: 3">
+                </div>
+            </div>
+            <div class="form-row" id="dateRow">
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="fIncDate" value="${i.date || ''}">
+                </div>
                 <div class="form-group">
                     <label>Banco</label>
                     <select id="fIncBank">
@@ -567,35 +666,39 @@
                         ${BANKS.map(b => `<option value="${b}" ${i.bank === b ? 'selected' : ''}>${b}</option>`).join('')}
                     </select>
                 </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label>Categoria</label>
                     <select id="fIncCat">
                         ${INCOME_CATEGORIES.map(c => `<option value="${c}" ${i.category === c ? 'selected' : ''}>${c}</option>`).join('')}
                     </select>
                 </div>
-            </div>
-            <div class="form-row">
                 <div class="form-group">
                     <label>Fonte Pagadora</label>
                     <input type="text" id="fIncSource" value="${i.source || ''}" placeholder="Ex: Empresa XYZ">
                 </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label>Membro</label>
                     <select id="fIncMember">
                         ${members.map(m => `<option value="${m.id}" ${i.memberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="fIncStatus">
+                        <option value="" ${!i.status ? 'selected' : ''}>Pendente</option>
+                        <option value="Pg" ${i.status === 'Pg' ? 'selected' : ''}>Recebido</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="fIncStatus">
-                    <option value="" ${!i.status ? 'selected' : ''}>Pendente</option>
-                    <option value="Pg" ${i.status === 'Pg' ? 'selected' : ''}>Pago</option>
-                </select>
-            </div>
+            ${isGenerated ? '<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Este lançamento foi gerado automaticamente. Edite apenas valor e status.</p>' : ''}
         `;
 
         openModal(isEdit ? 'Editar Entrada' : 'Nova Entrada', body, () => {
+            const recType = $('fIncType').value;
             const data = {
                 id: i.id || uid(),
                 date: $('fIncDate').value,
@@ -605,14 +708,86 @@
                 source: $('fIncSource').value,
                 memberId: $('fIncMember').value,
                 status: $('fIncStatus').value,
+                recurrenceType: recType,
+                recurrenceDay: parseInt($('fIncDay').value) || null,
+                recurrenceTotal: parseInt($('fIncInstallments').value) || null,
+                recurrenceParent: i.recurrenceParent || null,
             };
 
-            const items = getIncomes();
-            const idx = items.findIndex(x => x.id === data.id);
-            if (idx >= 0) items[idx] = data; else items.push(data);
-            save(KEYS.incomes, items);
+            if (!isEdit && (recType === 'recorrente' || recType === 'parcelada')) {
+                generateRecurringIncomes(data);
+            } else {
+                const items = getIncomes();
+                const idx = items.findIndex(x => x.id === data.id);
+                if (idx >= 0) items[idx] = data; else items.push(data);
+                save(KEYS.incomes, items);
+            }
             renderCurrentPage();
         });
+
+        // Toggle recurrence fields after modal opens
+        setTimeout(() => {
+            const typeEl = $('fIncType');
+            if (!typeEl) return;
+
+            function toggleFields() {
+                const v = typeEl.value;
+                const recRow = $('recurrenceRow');
+                const instGroup = $('installmentGroup');
+                const dateRow = $('dateRow');
+                if (v === 'recorrente') {
+                    recRow.style.display = '';
+                    instGroup.style.display = 'none';
+                    dateRow.style.display = 'none';
+                } else if (v === 'parcelada') {
+                    recRow.style.display = '';
+                    instGroup.style.display = '';
+                    dateRow.style.display = 'none';
+                } else {
+                    recRow.style.display = 'none';
+                    dateRow.style.display = '';
+                }
+            }
+
+            typeEl.addEventListener('change', toggleFields);
+            toggleFields();
+        }, 50);
+    }
+
+    // --- Generate Recurring/Installment Incomes ---
+    function generateRecurringIncomes(data) {
+        const items = getIncomes();
+        const parentId = uid();
+        const day = data.recurrenceDay || 1;
+        const count = data.recurrenceType === 'parcelada' ? (data.recurrenceTotal || 1) : 12;
+        const startMonth = new Date().getMonth();
+        const startYear = new Date().getFullYear();
+
+        for (let i = 0; i < count; i++) {
+            let m = startMonth + i;
+            let y = startYear;
+            while (m > 11) { m -= 12; y++; }
+            const mm = String(m + 1).padStart(2, '0');
+            const dd = String(Math.min(day, 28)).padStart(2, '0');
+            const installLabel = data.recurrenceType === 'parcelada' ? `${i + 1}/${count}` : '';
+
+            items.push({
+                id: uid(),
+                date: `${y}-${mm}-${dd}`,
+                value: data.value,
+                bank: data.bank,
+                category: data.category,
+                source: data.source,
+                memberId: data.memberId,
+                status: '',
+                recurrenceType: data.recurrenceType,
+                recurrenceDay: day,
+                recurrenceTotal: data.recurrenceType === 'parcelada' ? count : null,
+                recurrenceParent: parentId,
+                installmentLabel: installLabel,
+            });
+        }
+        save(KEYS.incomes, items);
     }
 
     // --- Expense Modal ---
@@ -748,6 +923,9 @@
     $('filterPayment').addEventListener('change', renderSaidas);
     $('filterGroup').addEventListener('change', renderSaidas);
     $('searchExpense').addEventListener('input', renderSaidas);
+    $('filterIncCat').addEventListener('change', renderEntradas);
+    $('filterIncBank').addEventListener('change', renderEntradas);
+    $('filterIncType').addEventListener('change', renderEntradas);
 
     // --- Button listeners ---
     $('btnAddIncome').addEventListener('click', () => openIncomeModal(null));
@@ -761,6 +939,14 @@
         editIncome(id) {
             const item = getIncomes().find(i => i.id === id);
             if (item) openIncomeModal(item);
+        },
+        toggleIncomeStatus(id) {
+            const items = getIncomes();
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            item.status = item.status === 'Pg' ? '' : 'Pg';
+            save(KEYS.incomes, items);
+            renderCurrentPage();
         },
         deleteIncome(id) {
             if (!confirm('Excluir esta entrada?')) return;
@@ -812,6 +998,15 @@
             const data = { category, monthKey, value: parseFloat(value) || 0 };
             if (idx >= 0) budgets[idx] = data; else budgets.push(data);
             save(KEYS.budgets, budgets);
+        },
+        toggleSort(tableName, field) {
+            const s = state.sort[tableName];
+            if (s && s.field === field) {
+                state.sort[tableName] = { field, dir: s.dir === 'asc' ? 'desc' : 'asc' };
+            } else {
+                state.sort[tableName] = { field, dir: 'asc' };
+            }
+            renderCurrentPage();
         },
     };
 
