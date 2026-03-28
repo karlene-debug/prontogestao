@@ -191,6 +191,7 @@
             case 'entradas': renderEntradas(); break;
             case 'saidas': renderSaidas(); break;
             case 'orcamento': renderOrcamento(); break;
+            case 'fluxo': renderFluxo(); break;
             case 'membros': renderMembros(); break;
             case 'planejamento': renderPlanejamento(); break;
         }
@@ -617,6 +618,173 @@
             }).join('');
         }).join('');
     }
+
+    // ============================================================
+    // FLUXO DE CAIXA
+    // ============================================================
+    function renderFluxo() {
+        const periodo = parseInt($('fluxoPeriodo').value) || 12;
+        const allIncomes = filterByMember(getIncomes());
+        const allExpenses = filterByMember(getExpenses());
+        const now = new Date();
+        const currentM = now.getMonth();
+        const currentY = now.getFullYear();
+
+        // Build monthly data
+        const months = [];
+        for (let i = 0; i < periodo; i++) {
+            let m = currentM + i;
+            let y = currentY;
+            while (m > 11) { m -= 12; y++; }
+            const inc = allIncomes.filter(item => {
+                const d = new Date(item.date + 'T00:00:00');
+                return d.getMonth() === m && d.getFullYear() === y;
+            }).reduce((s, item) => s + Number(item.value), 0);
+            const exp = allExpenses.filter(item => {
+                const d = new Date(item.date + 'T00:00:00');
+                return d.getMonth() === m && d.getFullYear() === y;
+            }).reduce((s, item) => s + Number(item.value), 0);
+            months.push({ month: m, year: y, income: inc, expense: exp, saldo: inc - exp });
+        }
+
+        // Acumulado
+        let acum = 0;
+        months.forEach(m => { acum += m.saldo; m.acumulado = acum; });
+
+        // Totals
+        const totalInc = months.reduce((s, m) => s + m.income, 0);
+        const totalExp = months.reduce((s, m) => s + m.expense, 0);
+        const totalSaldo = totalInc - totalExp;
+        const taxaEconomia = totalInc > 0 ? Math.round((totalSaldo / totalInc) * 100) : 0;
+
+        // Health indicator
+        const healthIcon = $('healthIcon');
+        const healthTitle = $('healthTitle');
+        const healthDesc = $('healthDesc');
+        const negativos = months.filter(m => m.saldo < 0).length;
+
+        healthIcon.className = 'health-icon';
+        if (taxaEconomia >= 20) {
+            healthIcon.classList.add('excellent');
+            healthIcon.textContent = '\u2705';
+            healthTitle.textContent = 'Excelente!';
+            healthTitle.style.color = 'var(--income)';
+            healthDesc.textContent = `Economia de ${taxaEconomia}% da receita. Acima da meta de 20%.`;
+        } else if (taxaEconomia >= 10) {
+            healthIcon.classList.add('good');
+            healthIcon.textContent = '\uD83D\uDC4D';
+            healthTitle.textContent = 'Bom caminho';
+            healthTitle.style.color = 'var(--need)';
+            healthDesc.textContent = `Economia de ${taxaEconomia}%. Falta pouco para a meta de 20%.`;
+        } else if (taxaEconomia >= 0) {
+            healthIcon.classList.add('warning');
+            healthIcon.textContent = '\u26A0\uFE0F';
+            healthTitle.textContent = 'Atenção';
+            healthTitle.style.color = 'var(--warning)';
+            healthDesc.textContent = `Economia de apenas ${taxaEconomia}%. Gasto muito próximo da receita.`;
+        } else {
+            healthIcon.classList.add('danger');
+            healthIcon.textContent = '\uD83D\uDEA8';
+            healthTitle.textContent = 'Crítico - Gastando mais do que ganha';
+            healthTitle.style.color = 'var(--debt)';
+            healthDesc.textContent = `Déficit de ${Math.abs(taxaEconomia)}%. Despesas superam a receita.`;
+        }
+
+        $('fluxoReceita').textContent = currency(totalInc);
+        $('fluxoDespesa').textContent = currency(totalExp);
+        $('fluxoSaldo').textContent = currency(totalSaldo);
+        $('fluxoSaldo').style.color = totalSaldo >= 0 ? 'var(--income)' : 'var(--debt)';
+        $('fluxoEconomia').textContent = taxaEconomia + '%';
+        $('fluxoEconomia').style.color = taxaEconomia >= 20 ? 'var(--income)' : taxaEconomia >= 0 ? 'var(--warning)' : 'var(--debt)';
+
+        // Alerts
+        let alertsHtml = '';
+        if (negativos > 0) {
+            const mesesNeg = months.filter(m => m.saldo < 0).map(m => SHORT_MONTHS[m.month] + '/' + String(m.year).slice(2)).join(', ');
+            alertsHtml += `<div class="fluxo-alert alert-danger"><span class="fluxo-alert-icon">\uD83D\uDEA8</span>${negativos} mês(es) com saldo negativo: ${mesesNeg}</div>`;
+        }
+        const lastAcum = months[months.length - 1]?.acumulado || 0;
+        if (lastAcum < 0) {
+            alertsHtml += `<div class="fluxo-alert alert-danger"><span class="fluxo-alert-icon">\uD83D\uDCB8</span>Projeção de déficit acumulado de ${currency(Math.abs(lastAcum))} em ${periodo} meses</div>`;
+        } else if (lastAcum > 0) {
+            alertsHtml += `<div class="fluxo-alert alert-success"><span class="fluxo-alert-icon">\uD83D\uDCB0</span>Projeção de sobra de ${currency(lastAcum)} em ${periodo} meses</div>`;
+        }
+        $('fluxoAlertas').innerHTML = alertsHtml;
+
+        // Chart
+        const maxVal = Math.max(...months.map(m => Math.max(m.income, m.expense)), 1);
+        $('fluxoChart').innerHTML = months.map(m => {
+            const incW = Math.round((m.income / maxVal) * 100);
+            const expW = Math.round((m.expense / maxVal) * 100);
+            const isCurrent = m.month === currentM && m.year === currentY;
+            return `<div class="fluxo-chart-row${isCurrent ? ' fluxo-current' : ''}">
+                <span class="fluxo-chart-label">${SHORT_MONTHS[m.month]}/${String(m.year).slice(2)}</span>
+                <div class="fluxo-bar-container"><div class="fluxo-bar bar-income" style="width:${incW}%">${incW > 15 ? (m.income/1000).toFixed(1)+'k' : ''}</div></div>
+                <div class="fluxo-bar-container"><div class="fluxo-bar bar-expense" style="width:${expW}%">${expW > 15 ? (m.expense/1000).toFixed(1)+'k' : ''}</div></div>
+                <span class="fluxo-chart-saldo" style="color:${m.saldo >= 0 ? 'var(--income)' : 'var(--debt)'}">${m.saldo >= 0 ? '+' : ''}${(m.saldo/1000).toFixed(1)}k</span>
+            </div>`;
+        }).join('');
+
+        // Table
+        $('fluxoTable').innerHTML = months.map(m => {
+            const isCurrent = m.month === currentM && m.year === currentY;
+            const isNeg = m.saldo < 0;
+            const rowClass = isNeg ? 'fluxo-negative' : (isCurrent ? 'fluxo-current' : '');
+            const statusIcon = m.saldo >= 0 ? (m.saldo > m.income * 0.2 ? '\u2705' : '\u26A0\uFE0F') : '\uD83D\uDD34';
+            return `<tr class="${rowClass}">
+                <td style="font-weight:${isCurrent ? '700' : '400'}">${MONTH_NAMES[m.month]} ${m.year}${isCurrent ? ' (atual)' : ''}</td>
+                <td style="color:var(--income)">${currency(m.income)}</td>
+                <td style="color:var(--expense)">${currency(m.expense)}</td>
+                <td style="font-weight:600;color:${m.saldo >= 0 ? 'var(--income)' : 'var(--debt)'}">${currency(m.saldo)}</td>
+                <td style="font-weight:600;color:${m.acumulado >= 0 ? 'var(--income)' : 'var(--debt)'}">${currency(m.acumulado)}</td>
+                <td>${statusIcon}</td>
+            </tr>`;
+        }).join('');
+
+        // Insights
+        const insights = [];
+        const avgExp = totalExp / periodo;
+        const avgInc = totalInc / periodo;
+
+        if (taxaEconomia >= 20) {
+            insights.push({ icon: '\uD83C\uDFC6', text: `Parabéns! Sua taxa de economia de ${taxaEconomia}% atinge a meta da regra 50/30/20.` });
+        } else if (taxaEconomia > 0) {
+            const falta = Math.round(avgInc * 0.2) - Math.round(avgInc * taxaEconomia / 100);
+            insights.push({ icon: '\uD83C\uDFAF', text: `Para atingir 20% de economia, reduza em média R$ ${falta.toLocaleString('pt-BR')} por mês nas despesas.` });
+        }
+
+        if (negativos > 0) {
+            insights.push({ icon: '\uD83D\uDCC9', text: `${negativos} de ${periodo} meses projetam saldo negativo. Revise as despesas desses meses.` });
+        }
+
+        const biggestExpMonth = months.reduce((max, m) => m.expense > max.expense ? m : max, months[0]);
+        insights.push({ icon: '\uD83D\uDCC8', text: `Mês mais caro: ${MONTH_NAMES[biggestExpMonth.month]} ${biggestExpMonth.year} com ${currency(biggestExpMonth.expense)} em despesas.` });
+
+        const avgMonthly = Math.round(totalSaldo / periodo);
+        if (avgMonthly > 0) {
+            insights.push({ icon: '\uD83D\uDCB5', text: `Em média, sobram ${currency(avgMonthly)} por mês. Em 1 ano seriam ${currency(avgMonthly * 12)}.` });
+        }
+
+        // Check investimentos
+        const investTotal = allExpenses.filter(e => {
+            const cat = CATEGORIES.find(c => c.name === e.category);
+            return cat && cat.condition === 'Financeiro';
+        }).reduce((s, e) => s + Number(e.value), 0);
+        if (investTotal > 0) {
+            insights.push({ icon: '\uD83D\uDE80', text: `Total alocado em investimentos/financeiro: ${currency(investTotal)}. Continue investindo!` });
+        } else {
+            insights.push({ icon: '\uD83D\uDCA1', text: `Nenhum valor alocado em investimentos. Considere destinar 20% da receita para reserva e objetivos.` });
+        }
+
+        $('fluxoInsights').innerHTML = insights.map(i =>
+            `<div class="insight-item"><span class="insight-icon">${i.icon}</span><span>${i.text}</span></div>`
+        ).join('');
+    }
+
+    // Listener for period change
+    $('fluxoPeriodo').addEventListener('change', () => {
+        if (state.currentPage === 'fluxo') renderFluxo();
+    });
 
     // ============================================================
     // MODALS
