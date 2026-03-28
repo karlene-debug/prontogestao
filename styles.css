@@ -246,6 +246,28 @@ body {
 .btn-icon:hover { color: var(--text-primary); background: var(--bg-hover); }
 .btn-icon.delete:hover { color: var(--expense); }
 
+/* ---- ACTION BUTTONS (table rows) ---- */
+.actions-cell {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+}
+.btn-action {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+}
+.btn-action:hover { border-color: var(--accent); color: var(--accent); }
+.btn-action.edit:hover { border-color: var(--accent); color: var(--accent); }
+.btn-action.danger:hover { border-color: var(--expense); color: var(--expense); }
+
 /* ---- SUMMARY CARDS ---- */
 .summary-cards {
     display: grid;

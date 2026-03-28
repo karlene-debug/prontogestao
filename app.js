@@ -404,9 +404,9 @@
                         ${i.status === 'Pg' ? '&#10003; Recebido' : '&#9711; Confirmar'}
                     </button>
                 </td>
-                <td>
-                    <button class="btn-icon" onclick="App.editIncome('${i.id}')" title="Editar">&#9998;</button>
-                    <button class="btn-icon delete" onclick="App.deleteIncome('${i.id}')" title="Excluir">&#10005;</button>
+                <td class="actions-cell">
+                    <button class="btn-action edit" onclick="App.editIncome('${i.id}')">Editar</button>
+                    <button class="btn-action danger" onclick="App.deleteIncome('${i.id}')">Excluir</button>
                 </td>
             </tr>`;
         }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
@@ -489,10 +489,9 @@
                 <td>${e.category || '-'}</td>
                 <td>${member ? member.name : '-'}</td>
                 <td><span class="status-badge ${e.status === 'Pg' ? 'paid' : 'pending'}">${e.status === 'Pg' ? 'Pago' : 'Pendente'}</span></td>
-                <td>
-                    <button class="btn-icon" onclick="App.editExpense('${e.id}')" title="Editar">&#9998;</button>
-                    <button class="btn-icon" onclick="App.duplicateExpense('${e.id}')" title="Duplicar">&#10697;</button>
-                    <button class="btn-icon delete" onclick="App.deleteExpense('${e.id}')" title="Excluir">&#10005;</button>
+                <td class="actions-cell">
+                    <button class="btn-action edit" onclick="App.editExpense('${e.id}')">Editar</button>
+                    <button class="btn-action danger" onclick="App.deleteExpense('${e.id}')">Excluir</button>
                 </td>
             </tr>`;
         }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma saída neste mês</td></tr>';
@@ -869,7 +868,7 @@
                 </div>
                 <div class="form-group" id="installmentCountGroup" style="${e.installments ? '' : 'display:none'}">
                     <label>Quantidade de Parcelas</label>
-                    <input type="number" min="2" max="48" id="fExpInstallCount" value="${e.installments ? e.installments.split('/')[1] || '' : ''}" placeholder="Ex: 10" ${isGeneratedInstallment ? 'disabled' : ''}>
+                    <input type="number" min="2" max="72" id="fExpInstallCount" value="${e.installments ? e.installments.split('/')[1] || '' : ''}" placeholder="Ex: 10" ${isGeneratedInstallment ? 'disabled' : ''}>
                 </div>
             </div>
             <div class="form-row">
