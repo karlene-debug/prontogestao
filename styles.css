@@ -538,6 +538,20 @@ body {
     font-size: 0.85rem;
 }
 
+/* ---- SEARCH INPUT ---- */
+.search-input {
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-family: var(--font);
+    min-width: 180px;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus { outline: none; border-color: var(--accent); }
+
 /* ---- FILTER SELECTS ---- */
 .filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .filter-select {

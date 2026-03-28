@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ProntoGestão - App de gestão financeira familiar. Controle receitas, despesas, orçamento e a regra 50/30/20.">
+    <meta name="theme-color" content="#6c5ce7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>ProntoGestão - Gestão Financeira Familiar</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -199,6 +205,7 @@
                 <header class="page-header">
                     <h2>Saídas</h2>
                     <div class="header-actions">
+                        <input type="text" id="searchExpense" class="search-input" placeholder="Buscar estabelecimento...">
                         <div class="filter-group">
                             <select id="filterBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
                             <select id="filterPayment" class="filter-select"><option value="all">Tipo Pagamento</option></select>

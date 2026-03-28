@@ -325,8 +325,9 @@
                 <td>${member ? member.name : '-'}</td>
                 <td><span class="status-badge ${i.status === 'Pg' ? 'paid' : 'pending'}">${i.status === 'Pg' ? 'Pago' : 'Pendente'}</span></td>
                 <td>
-                    <button class="btn-icon" onclick="App.editIncome('${i.id}')">&#9998;</button>
-                    <button class="btn-icon delete" onclick="App.deleteIncome('${i.id}')">&#10005;</button>
+                    <button class="btn-icon" onclick="App.editIncome('${i.id}')" title="Editar">&#9998;</button>
+                    <button class="btn-icon" onclick="App.duplicateIncome('${i.id}')" title="Duplicar">&#10697;</button>
+                    <button class="btn-icon delete" onclick="App.deleteIncome('${i.id}')" title="Excluir">&#10005;</button>
                 </td>
             </tr>`;
         }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
@@ -357,6 +358,7 @@
         const bankF = $('filterBank').value;
         const payF = $('filterPayment').value;
         const groupF = $('filterGroup').value;
+        const searchTerm = ($('searchExpense').value || '').toLowerCase().trim();
 
         if (bankF !== 'all') expenses = expenses.filter(e => e.bank === bankF);
         if (payF !== 'all') expenses = expenses.filter(e => e.paymentType === payF);
@@ -364,8 +366,17 @@
             const cat = CATEGORIES.find(c => c.name === e.category);
             return cat && cat.group === groupF;
         });
+        if (searchTerm) expenses = expenses.filter(e =>
+            (e.description || '').toLowerCase().includes(searchTerm) ||
+            (e.category || '').toLowerCase().includes(searchTerm)
+        );
 
         const total = expenses.reduce((s, e) => s + Number(e.value), 0);
+        const fixo = expenses.filter(e => {
+            const cat = CATEGORIES.find(c => c.name === e.category);
+            return cat && cat.type === 'Fixo';
+        }).reduce((s, e) => s + Number(e.value), 0);
+        const variavel = total - fixo;
 
         $('expenseTable').innerHTML = expenses.map(e => {
             const member = members.find(m => m.id === e.memberId);
@@ -380,13 +391,14 @@
                 <td>${member ? member.name : '-'}</td>
                 <td><span class="status-badge ${e.status === 'Pg' ? 'paid' : 'pending'}">${e.status === 'Pg' ? 'Pago' : 'Pendente'}</span></td>
                 <td>
-                    <button class="btn-icon" onclick="App.editExpense('${e.id}')">&#9998;</button>
-                    <button class="btn-icon delete" onclick="App.deleteExpense('${e.id}')">&#10005;</button>
+                    <button class="btn-icon" onclick="App.editExpense('${e.id}')" title="Editar">&#9998;</button>
+                    <button class="btn-icon" onclick="App.duplicateExpense('${e.id}')" title="Duplicar">&#10697;</button>
+                    <button class="btn-icon delete" onclick="App.deleteExpense('${e.id}')" title="Excluir">&#10005;</button>
                 </td>
             </tr>`;
         }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma saída neste mês</td></tr>';
 
-        $('expenseTotalTable').textContent = currency(total);
+        $('expenseTotalTable').innerHTML = `${currency(total)} <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:12px">Fixo: ${currency(fixo)} | Variável: ${currency(variavel)}</span>`;
     }
 
     function populateSelect(el, options, placeholder) {
@@ -735,6 +747,7 @@
     $('filterBank').addEventListener('change', renderSaidas);
     $('filterPayment').addEventListener('change', renderSaidas);
     $('filterGroup').addEventListener('change', renderSaidas);
+    $('searchExpense').addEventListener('input', renderSaidas);
 
     // --- Button listeners ---
     $('btnAddIncome').addEventListener('click', () => openIncomeModal(null));
@@ -754,6 +767,15 @@
             save(KEYS.incomes, getIncomes().filter(i => i.id !== id));
             renderCurrentPage();
         },
+        duplicateIncome(id) {
+            const item = getIncomes().find(i => i.id === id);
+            if (!item) return;
+            const dup = { ...item, id: uid(), status: '' };
+            const items = getIncomes();
+            items.push(dup);
+            save(KEYS.incomes, items);
+            renderCurrentPage();
+        },
         editExpense(id) {
             const item = getExpenses().find(e => e.id === id);
             if (item) openExpenseModal(item);
@@ -761,6 +783,15 @@
         deleteExpense(id) {
             if (!confirm('Excluir esta saída?')) return;
             save(KEYS.expenses, getExpenses().filter(e => e.id !== id));
+            renderCurrentPage();
+        },
+        duplicateExpense(id) {
+            const item = getExpenses().find(e => e.id === id);
+            if (!item) return;
+            const dup = { ...item, id: uid(), status: '' };
+            const items = getExpenses();
+            items.push(dup);
+            save(KEYS.expenses, items);
             renderCurrentPage();
         },
         editMember(id) {
