@@ -176,50 +176,97 @@
             <section class="page" id="page-entradas">
                 <header class="page-header">
                     <h2>Entradas</h2>
-                    <div class="header-actions">
-                        <div class="filter-group">
-                            <select id="filterIncCat" class="filter-select"><option value="all">Todas as Categorias</option></select>
-                            <select id="filterIncBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
-                            <select id="filterIncType" class="filter-select">
-                                <option value="all">Todos os Tipos</option>
-                                <option value="recorrente">Recorrente</option>
-                                <option value="parcelada">Parcelada</option>
-                                <option value="avulsa">Avulsa</option>
-                            </select>
-                        </div>
-                        <button class="btn-primary" id="btnAddIncome">+ Nova Entrada</button>
-                    </div>
+                    <button class="btn-primary" id="btnAddIncome">+ Nova Entrada</button>
                 </header>
+
+                <!-- Navegador de mês -->
+                <div class="page-month-nav">
+                    <button class="month-nav-lg" id="prevMonthInc">&lt;</button>
+                    <span class="month-nav-label" id="monthLabelInc">Março 2026</span>
+                    <button class="month-nav-lg" id="nextMonthInc">&gt;</button>
+                </div>
+
+                <!-- Cards resumo -->
+                <div class="summary-cards summary-cards-sm">
+                    <div class="summary-card income">
+                        <span class="card-label">Total Previsto</span>
+                        <span class="card-value" id="incTotalCard">R$ 0</span>
+                    </div>
+                    <div class="summary-card" style="border-left:3px solid var(--income)">
+                        <span class="card-label">Recebido</span>
+                        <span class="card-value" id="incReceivedCard" style="color:var(--income)">R$ 0</span>
+                    </div>
+                    <div class="summary-card" style="border-left:3px solid var(--warning)">
+                        <span class="card-label">Pendente</span>
+                        <span class="card-value" id="incPendingCard" style="color:var(--warning)">R$ 0</span>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="table-filters">
+                    <input type="text" id="searchIncome" class="search-input" placeholder="Buscar fonte, categoria...">
+                    <select id="filterIncCat" class="filter-select"><option value="all">Todas as Categorias</option></select>
+                    <select id="filterIncBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
+                    <select id="filterIncType" class="filter-select">
+                        <option value="all">Todos os Tipos</option>
+                        <option value="recorrente">Recorrente</option>
+                        <option value="parcelada">Parcelada</option>
+                        <option value="avulsa">Avulsa</option>
+                    </select>
+                </div>
+
                 <div class="table-container">
                     <table class="data-table">
                         <thead id="incomeHead"></thead>
                         <tbody id="incomeTable"></tbody>
                     </table>
                 </div>
-                <div class="table-total" id="incomeSummary"></div>
             </section>
 
             <!-- SAIDAS -->
             <section class="page" id="page-saidas">
                 <header class="page-header">
                     <h2>Saídas</h2>
-                    <div class="header-actions">
-                        <input type="text" id="searchExpense" class="search-input" placeholder="Buscar estabelecimento...">
-                        <div class="filter-group">
-                            <select id="filterBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
-                            <select id="filterPayment" class="filter-select"><option value="all">Tipo Pagamento</option></select>
-                            <select id="filterGroup" class="filter-select"><option value="all">Todos os Grupos</option></select>
-                        </div>
-                        <button class="btn-primary" id="btnAddExpense">+ Nova Saída</button>
-                    </div>
+                    <button class="btn-primary" id="btnAddExpense">+ Nova Saída</button>
                 </header>
+
+                <!-- Navegador de mês -->
+                <div class="page-month-nav">
+                    <button class="month-nav-lg" id="prevMonthExp">&lt;</button>
+                    <span class="month-nav-label" id="monthLabelExp">Março 2026</span>
+                    <button class="month-nav-lg" id="nextMonthExp">&gt;</button>
+                </div>
+
+                <!-- Cards resumo -->
+                <div class="summary-cards summary-cards-sm">
+                    <div class="summary-card expense">
+                        <span class="card-label">Total Gasto</span>
+                        <span class="card-value" id="expTotalCard">R$ 0</span>
+                    </div>
+                    <div class="summary-card" style="border-left:3px solid var(--need)">
+                        <span class="card-label">Fixo</span>
+                        <span class="card-value" id="expFixoCard" style="color:var(--need)">R$ 0</span>
+                    </div>
+                    <div class="summary-card" style="border-left:3px solid var(--want)">
+                        <span class="card-label">Variável</span>
+                        <span class="card-value" id="expVarCard" style="color:var(--want)">R$ 0</span>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="table-filters">
+                    <input type="text" id="searchExpense" class="search-input" placeholder="Buscar estabelecimento...">
+                    <select id="filterBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
+                    <select id="filterPayment" class="filter-select"><option value="all">Tipo Pagamento</option></select>
+                    <select id="filterGroup" class="filter-select"><option value="all">Todos os Grupos</option></select>
+                </div>
+
                 <div class="table-container">
                     <table class="data-table">
                         <thead id="expenseHead"></thead>
                         <tbody id="expenseTable"></tbody>
                     </table>
                 </div>
-                <div class="table-total" id="expenseSummary"></div>
             </section>
 
             <!-- ORCADO x REALIZADO -->

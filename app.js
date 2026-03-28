@@ -136,9 +136,15 @@
     const SHORT_MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
     function updateMonthDisplay() {
-        $('currentMonth').textContent = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
+        const label = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
+        $('currentMonth').textContent = label;
         const mobileEl = $('currentMonthMobile');
         if (mobileEl) mobileEl.textContent = SHORT_MONTHS[state.currentMonth] + ' ' + state.currentYear;
+        // Page-level month labels
+        const incLabel = $('monthLabelInc');
+        const expLabel = $('monthLabelExp');
+        if (incLabel) incLabel.textContent = label;
+        if (expLabel) expLabel.textContent = label;
     }
 
     function prevMonth() {
@@ -157,6 +163,10 @@
 
     $('prevMonth').addEventListener('click', prevMonth);
     $('nextMonth').addEventListener('click', nextMonth);
+    $('prevMonthInc').addEventListener('click', prevMonth);
+    $('nextMonthInc').addEventListener('click', nextMonth);
+    $('prevMonthExp').addEventListener('click', prevMonth);
+    $('nextMonthExp').addEventListener('click', nextMonth);
     $('prevMonthMobile').addEventListener('click', prevMonth);
     $('nextMonthMobile').addEventListener('click', nextMonth);
 
@@ -346,9 +356,15 @@
         const catF = $('filterIncCat').value;
         const bankF = $('filterIncBank').value;
         const typeF = $('filterIncType').value;
+        const searchTerm = ($('searchIncome').value || '').toLowerCase().trim();
         if (catF !== 'all') incomes = incomes.filter(i => i.category === catF);
         if (bankF !== 'all') incomes = incomes.filter(i => i.bank === bankF);
         if (typeF !== 'all') incomes = incomes.filter(i => (i.recurrenceType || 'avulsa') === typeF);
+        if (searchTerm) incomes = incomes.filter(i =>
+            (i.source || '').toLowerCase().includes(searchTerm) ||
+            (i.category || '').toLowerCase().includes(searchTerm) ||
+            (i.bank || '').toLowerCase().includes(searchTerm)
+        );
 
         // Sort
         incomes = sortItems(incomes, 'incomes', 'date');
@@ -395,7 +411,10 @@
             </tr>`;
         }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
 
-        $('incomeSummary').innerHTML = `Total: <strong>${currency(total)}</strong> <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:12px">Recebido: <span style="color:var(--income)">${currency(received)}</span> | Pendente: <span style="color:var(--warning)">${currency(pending)}</span></span>`;
+        // Summary cards
+        $('incTotalCard').textContent = currency(total);
+        $('incReceivedCard').textContent = currency(received);
+        $('incPendingCard').textContent = currency(pending);
     }
 
     // ============================================================
@@ -478,7 +497,10 @@
             </tr>`;
         }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma saída neste mês</td></tr>';
 
-        $('expenseSummary').innerHTML = `Total: <strong>${currency(total)}</strong> <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:12px">Fixo: ${currency(fixo)} | Variável: ${currency(variavel)}</span>`;
+        // Summary cards
+        $('expTotalCard').textContent = currency(total);
+        $('expFixoCard').textContent = currency(fixo);
+        $('expVarCard').textContent = currency(variavel);
     }
 
     function populateSelect(el, options, placeholder) {
@@ -926,6 +948,7 @@
     $('filterIncCat').addEventListener('change', renderEntradas);
     $('filterIncBank').addEventListener('change', renderEntradas);
     $('filterIncType').addEventListener('change', renderEntradas);
+    $('searchIncome').addEventListener('input', renderEntradas);
 
     // --- Button listeners ---
     $('btnAddIncome').addEventListener('click', () => openIncomeModal(null));
