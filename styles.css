@@ -31,6 +31,46 @@
     --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* ---- LIGHT THEME ---- */
+[data-theme="light"] {
+    --bg-primary: #f5f6fa;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #f0f1f5;
+    --border: #e2e4ea;
+    --text-primary: #1a1d27;
+    --text-secondary: #5c6078;
+    --text-muted: #8b8fa3;
+    --accent: #6c5ce7;
+    --accent-hover: #5a4bd6;
+    --income: #00a884;
+    --income-bg: rgba(0, 168, 132, 0.1);
+    --expense: #d35400;
+    --expense-bg: rgba(211, 84, 0, 0.08);
+    --balance-pos: #00a884;
+    --balance-neg: #d35400;
+    --need: #0873cc;
+    --want: #d35400;
+    --financial: #00a884;
+    --debt: #c0392b;
+    --warning: #e6a800;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .sidebar {
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .summary-card,
+[data-theme="light"] .card,
+[data-theme="light"] .health-card {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .data-table th {
+    background: #f0f1f5;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -140,7 +180,28 @@ body {
 .sidebar-footer {
     padding: 16px 20px;
     border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
+
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+.theme-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
+.theme-icon { font-size: 1.1rem; }
 
 .month-selector {
     display: flex;

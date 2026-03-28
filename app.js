@@ -1414,8 +1414,36 @@
     };
 
     // ============================================================
+    // THEME
+    // ============================================================
+    function loadTheme() {
+        const saved = localStorage.getItem('pg_theme') || 'dark';
+        applyTheme(saved);
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('pg_theme', theme);
+        const icon = $('themeIcon');
+        const label = $('themeLabel');
+        if (theme === 'light') {
+            icon.textContent = '\u2600';
+            label.textContent = 'Modo Escuro';
+        } else {
+            icon.textContent = '\u263D';
+            label.textContent = 'Modo Claro';
+        }
+    }
+
+    $('themeToggle').addEventListener('click', () => {
+        const current = localStorage.getItem('pg_theme') || 'dark';
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    // ============================================================
     // INIT
     // ============================================================
+    loadTheme();
     populateMemberFilter();
     updateMonthDisplay();
     renderDashboard();
