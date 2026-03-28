@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProntoGestão - Gestão Financeira Familiar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">Pronto<span>Gestão</span></h1>
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+            </div>
+
+            <div class="member-selector">
+                <label>Visualizando:</label>
+                <select id="memberFilter">
+                    <option value="all">Família (Todos)</option>
+                </select>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-page="dashboard">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/></svg>
+                    Dashboard
+                </button>
+                <button class="nav-btn" data-page="entradas">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M11 8c0-.55-.45-1-1-1s-1 .45-1 1 .45 1 1 1 1-.45 1-1zm2-2V4a2 2 0 00-2-2H5a2 2 0 00-2 2v16a2 2 0 002 2h6a2 2 0 002-2v-2h-1c-1.38 0-2.63-.56-3.54-1.46L5.29 13.37A4.983 4.983 0 014 10c0-2.76 2.24-5 5-5h4zm8.71 5.29l-4-4a1.003 1.003 0 00-1.42 1.42L18.59 11H10c-.55 0-1 .45-1 1s.45 1 1 1h8.59l-2.29 2.29a1.003 1.003 0 001.42 1.42l4-4c.38-.39.38-1.01-.01-1.42z" fill="currentColor"/></svg>
+                    Entradas
+                </button>
+                <button class="nav-btn" data-page="saidas">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M11 8c0-.55-.45-1-1-1s-1 .45-1 1 .45 1 1 1 1-.45 1-1zm-2 13v-1H5a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v2H9c-2.76 0-5 2.24-5 5 0 1.38.56 2.63 1.46 3.54l3.17 3.17A4.95 4.95 0 009 20v1zm10.71-9.71l-4-4a1.003 1.003 0 00-1.42 1.42L16.59 11H8c-.55 0-1 .45-1 1s.45 1 1 1h8.59l-2.29 2.29a1.003 1.003 0 001.42 1.42l4-4c.38-.39.38-1.01-.01-1.42z" fill="currentColor"/></svg>
+                    Saídas
+                </button>
+                <button class="nav-btn" data-page="orcamento">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/></svg>
+                    Orçado x Real
+                </button>
+                <button class="nav-btn" data-page="membros">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg>
+                    Membros
+                </button>
+                <button class="nav-btn" data-page="planejamento">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/></svg>
+                    Planejamento
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="month-selector">
+                    <button id="prevMonth" class="month-nav">&lt;</button>
+                    <span id="currentMonth">Março 2026</span>
+                    <button id="nextMonth" class="month-nav">&gt;</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+
+            <!-- DASHBOARD -->
+            <section class="page active" id="page-dashboard">
+                <header class="page-header">
+                    <h2>Dashboard</h2>
+                    <div class="header-actions">
+                        <span class="current-member" id="dashMember">Família</span>
+                    </div>
+                </header>
+
+                <div class="summary-cards">
+                    <div class="summary-card income">
+                        <span class="card-label">Receitas</span>
+                        <span class="card-value" id="totalIncome">R$ 0</span>
+                        <span class="card-sub" id="incomeStatus">0 recebidos</span>
+                    </div>
+                    <div class="summary-card expense">
+                        <span class="card-label">Despesas</span>
+                        <span class="card-value" id="totalExpense">R$ 0</span>
+                        <span class="card-sub" id="expenseCount">0 lançamentos</span>
+                    </div>
+                    <div class="summary-card balance">
+                        <span class="card-label">Saldo</span>
+                        <span class="card-value" id="totalBalance">R$ 0</span>
+                        <span class="card-sub" id="balancePercent">--</span>
+                    </div>
+                </div>
+
+                <!-- Regra 50/30/20 -->
+                <div class="card rule-card">
+                    <h3>Regra 50 / 30 / 20</h3>
+                    <div class="rule-bars">
+                        <div class="rule-item">
+                            <div class="rule-header">
+                                <span>Necessidade</span>
+                                <span class="rule-values"><span id="ruleNeedPct">0%</span> / meta 50%</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill need" id="ruleNeedBar" style="width:0%"></div></div>
+                        </div>
+                        <div class="rule-item">
+                            <div class="rule-header">
+                                <span>Desejo</span>
+                                <span class="rule-values"><span id="ruleWantPct">0%</span> / meta 30%</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill want" id="ruleWantBar" style="width:0%"></div></div>
+                        </div>
+                        <div class="rule-item">
+                            <div class="rule-header">
+                                <span>Financeiro</span>
+                                <span class="rule-values"><span id="ruleFinPct">0%</span> / meta 20%</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill financial" id="ruleFinBar" style="width:0%"></div></div>
+                        </div>
+                        <div class="rule-item">
+                            <div class="rule-header">
+                                <span>Dívidas</span>
+                                <span class="rule-values"><span id="ruleDebtPct">0%</span> / meta 0%</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill debt" id="ruleDebtBar" style="width:0%"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gastos por Grupo -->
+                <div class="card">
+                    <h3>Gastos por Grupo</h3>
+                    <div class="group-chart" id="groupChart"></div>
+                </div>
+
+                <!-- Gastos por Forma de Pagamento -->
+                <div class="card">
+                    <h3>Forma de Pagamento</h3>
+                    <div class="payment-chart" id="paymentChart"></div>
+                </div>
+            </section>
+
+            <!-- ENTRADAS -->
+            <section class="page" id="page-entradas">
+                <header class="page-header">
+                    <h2>Entradas</h2>
+                    <button class="btn-primary" id="btnAddIncome">+ Nova Entrada</button>
+                </header>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Banco</th>
+                                <th>Valor</th>
+                                <th>Categoria</th>
+                                <th>Fonte</th>
+                                <th>Membro</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incomeTable"></tbody>
+                    </table>
+                </div>
+                <div class="table-total">
+                    Total: <strong id="incomeTotalTable">R$ 0</strong>
+                </div>
+            </section>
+
+            <!-- SAIDAS -->
+            <section class="page" id="page-saidas">
+                <header class="page-header">
+                    <h2>Saídas</h2>
+                    <div class="header-actions">
+                        <div class="filter-group">
+                            <select id="filterBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
+                            <select id="filterPayment" class="filter-select"><option value="all">Tipo Pagamento</option></select>
+                            <select id="filterGroup" class="filter-select"><option value="all">Todos os Grupos</option></select>
+                        </div>
+                        <button class="btn-primary" id="btnAddExpense">+ Nova Saída</button>
+                    </div>
+                </header>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Banco</th>
+                                <th>Tipo Pgto</th>
+                                <th>Data</th>
+                                <th>Valor</th>
+                                <th>Parcelas</th>
+                                <th>Estabelecimento</th>
+                                <th>Plano de Contas</th>
+                                <th>Membro</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenseTable"></tbody>
+                    </table>
+                </div>
+                <div class="table-total">
+                    Total: <strong id="expenseTotalTable">R$ 0</strong>
+                </div>
+            </section>
+
+            <!-- ORCADO x REALIZADO -->
+            <section class="page" id="page-orcamento">
+                <header class="page-header">
+                    <h2>Orçado x Realizado</h2>
+                </header>
+                <div class="table-container">
+                    <table class="data-table budget-table">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Orçado</th>
+                                <th>Realizado</th>
+                                <th>Variação</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="budgetTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- MEMBROS -->
+            <section class="page" id="page-membros">
+                <header class="page-header">
+                    <h2>Membros da Família</h2>
+                    <button class="btn-primary" id="btnAddMember">+ Novo Membro</button>
+                </header>
+                <div class="members-grid" id="membersGrid"></div>
+            </section>
+
+            <!-- PLANEJAMENTO -->
+            <section class="page" id="page-planejamento">
+                <header class="page-header">
+                    <h2>Planejamento</h2>
+                </header>
+                <div class="card">
+                    <h3>Regra de Ouro - Distribuição Ideal</h3>
+                    <div class="golden-rule">
+                        <div class="golden-item need">
+                            <span class="golden-pct">50%</span>
+                            <span class="golden-label">Necessidade</span>
+                        </div>
+                        <div class="golden-item want">
+                            <span class="golden-pct">30%</span>
+                            <span class="golden-label">Desejo</span>
+                        </div>
+                        <div class="golden-item financial">
+                            <span class="golden-pct">20%</span>
+                            <span class="golden-label">Financeiro</span>
+                        </div>
+                        <div class="golden-item debt">
+                            <span class="golden-pct">0%</span>
+                            <span class="golden-label">Dívidas</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Categorias e Classificação</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Conta</th>
+                                    <th>Tipo</th>
+                                    <th>Grupo</th>
+                                    <th>Condição</th>
+                                </tr>
+                            </thead>
+                            <tbody id="planTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Definir Teto Mensal por Grupo</h3>
+                    <div class="budget-inputs" id="budgetInputs"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL GENÉRICO -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Novo Lançamento</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="modalCancel">Cancelar</button>
+                <button class="btn-primary" id="modalSave">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

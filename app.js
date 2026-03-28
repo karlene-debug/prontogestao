@@ -1,0 +1,711 @@
+// ============================================================
+// APP.JS - ProntoGestão - Gestão Financeira Familiar
+// ============================================================
+
+(function () {
+    'use strict';
+
+    // --- Storage Keys ---
+    const KEYS = {
+        members: 'pg_members',
+        incomes: 'pg_incomes',
+        expenses: 'pg_expenses',
+        budgets: 'pg_budgets',
+    };
+
+    // --- State ---
+    let state = {
+        currentPage: 'dashboard',
+        currentMonth: new Date().getMonth(),
+        currentYear: new Date().getFullYear(),
+        memberFilter: 'all',
+        editingId: null,
+        editingType: null,
+    };
+
+    // --- Helpers ---
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+    function load(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
+    function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+    function currency(v) {
+        const n = Number(v) || 0;
+        return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    function pct(part, total) { return total === 0 ? 0 : Math.round((part / total) * 100); }
+    function dateStr(d) {
+        if (!d) return '';
+        const dt = new Date(d + 'T00:00:00');
+        return dt.toLocaleDateString('pt-BR');
+    }
+
+    // --- Data Access ---
+    function getMembers() {
+        const m = load(KEYS.members);
+        if (m.length === 0) {
+            const defaults = [
+                { id: uid(), name: 'Pessoa 1', color: '#6c5ce7', role: 'Titular' },
+                { id: uid(), name: 'Pessoa 2', color: '#e84393', role: 'Cônjuge' },
+            ];
+            save(KEYS.members, defaults);
+            return defaults;
+        }
+        return m;
+    }
+
+    function getIncomes() { return load(KEYS.incomes); }
+    function getExpenses() { return load(KEYS.expenses); }
+    function getBudgets() { return load(KEYS.budgets); }
+
+    function filterByMonth(items, dateField) {
+        return items.filter(i => {
+            const d = new Date(i[dateField] + 'T00:00:00');
+            return d.getMonth() === state.currentMonth && d.getFullYear() === state.currentYear;
+        });
+    }
+
+    function filterByMember(items) {
+        if (state.memberFilter === 'all') return items;
+        return items.filter(i => i.memberId === state.memberFilter);
+    }
+
+    // --- DOM References ---
+    const $ = id => document.getElementById(id);
+    const sidebar = $('sidebar');
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const pages = document.querySelectorAll('.page');
+    const memberFilterSelect = $('memberFilter');
+
+    // --- Navigation ---
+    function navigate(page) {
+        state.currentPage = page;
+        pages.forEach(p => p.classList.remove('active'));
+        $('page-' + page).classList.add('active');
+        navBtns.forEach(b => {
+            b.classList.toggle('active', b.dataset.page === page);
+        });
+        sidebar.classList.remove('open');
+        renderCurrentPage();
+    }
+
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => navigate(btn.dataset.page));
+    });
+
+    // --- Sidebar Toggle (Mobile) ---
+    $('sidebarToggle').addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+    });
+
+    // --- Month Navigation ---
+    function updateMonthDisplay() {
+        $('currentMonth').textContent = MONTH_NAMES[state.currentMonth] + ' ' + state.currentYear;
+    }
+
+    $('prevMonth').addEventListener('click', () => {
+        state.currentMonth--;
+        if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
+        updateMonthDisplay();
+        renderCurrentPage();
+    });
+
+    $('nextMonth').addEventListener('click', () => {
+        state.currentMonth++;
+        if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
+        updateMonthDisplay();
+        renderCurrentPage();
+    });
+
+    // --- Member Filter ---
+    function populateMemberFilter() {
+        const members = getMembers();
+        memberFilterSelect.innerHTML = '<option value="all">Família (Todos)</option>';
+        members.forEach(m => {
+            memberFilterSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+        });
+    }
+
+    memberFilterSelect.addEventListener('change', () => {
+        state.memberFilter = memberFilterSelect.value;
+        renderCurrentPage();
+    });
+
+    // --- Render Current Page ---
+    function renderCurrentPage() {
+        switch (state.currentPage) {
+            case 'dashboard': renderDashboard(); break;
+            case 'entradas': renderEntradas(); break;
+            case 'saidas': renderSaidas(); break;
+            case 'orcamento': renderOrcamento(); break;
+            case 'membros': renderMembros(); break;
+            case 'planejamento': renderPlanejamento(); break;
+        }
+    }
+
+    // ============================================================
+    // DASHBOARD
+    // ============================================================
+    function renderDashboard() {
+        const incomes = filterByMember(filterByMonth(getIncomes(), 'date'));
+        const expenses = filterByMember(filterByMonth(getExpenses(), 'date'));
+        const members = getMembers();
+
+        const totalIn = incomes.reduce((s, i) => s + Number(i.value), 0);
+        const totalOut = expenses.reduce((s, e) => s + Number(e.value), 0);
+        const balance = totalIn - totalOut;
+
+        $('totalIncome').textContent = currency(totalIn);
+        $('totalExpense').textContent = currency(totalOut);
+
+        const balEl = $('totalBalance');
+        balEl.textContent = currency(balance);
+        balEl.className = 'card-value ' + (balance >= 0 ? 'positive' : 'negative');
+
+        const paidCount = incomes.filter(i => i.status === 'Pg').length;
+        $('incomeStatus').textContent = paidCount + ' de ' + incomes.length + ' recebidos';
+        $('expenseCount').textContent = expenses.length + ' lançamentos';
+        $('balancePercent').textContent = totalIn > 0 ? pct(totalOut, totalIn) + '% da receita gasta' : '--';
+
+        const memberLabel = state.memberFilter === 'all' ? 'Família' : (members.find(m => m.id === state.memberFilter)?.name || 'Família');
+        $('dashMember').textContent = memberLabel;
+
+        // Regra 50/30/20
+        const byCondition = { 'Necessidade': 0, 'Desejo': 0, 'Financeiro': 0, 'Dívidas': 0 };
+        expenses.forEach(e => {
+            const cat = CATEGORIES.find(c => c.name === e.category);
+            if (cat) byCondition[cat.condition] = (byCondition[cat.condition] || 0) + Number(e.value);
+        });
+
+        const condItems = [
+            { key: 'Necessidade', bar: 'ruleNeedBar', pctEl: 'ruleNeedPct' },
+            { key: 'Desejo', bar: 'ruleWantBar', pctEl: 'ruleWantPct' },
+            { key: 'Financeiro', bar: 'ruleFinBar', pctEl: 'ruleFinPct' },
+            { key: 'Dívidas', bar: 'ruleDebtBar', pctEl: 'ruleDebtPct' },
+        ];
+        condItems.forEach(ci => {
+            const p = totalOut > 0 ? pct(byCondition[ci.key], totalOut) : 0;
+            $(ci.pctEl).textContent = p + '%';
+            $(ci.bar).style.width = Math.min(p, 100) + '%';
+        });
+
+        // Gastos por Grupo
+        const byGroup = {};
+        expenses.forEach(e => {
+            const cat = CATEGORIES.find(c => c.name === e.category);
+            const g = cat ? cat.group : 'Outros';
+            byGroup[g] = (byGroup[g] || 0) + Number(e.value);
+        });
+        const maxGroup = Math.max(...Object.values(byGroup), 1);
+        const sortedGroups = Object.entries(byGroup).sort((a, b) => b[1] - a[1]);
+
+        $('groupChart').innerHTML = sortedGroups.map(([g, v]) => `
+            <div class="group-bar-item">
+                <span class="group-bar-label">${g}</span>
+                <div class="group-bar-track">
+                    <div class="group-bar-fill" style="width:${pct(v, maxGroup)}%;background:${GROUP_COLORS[g] || '#6c5ce7'}"></div>
+                </div>
+                <span class="group-bar-value">${currency(v)}</span>
+            </div>
+        `).join('');
+
+        // Forma de Pagamento
+        const byPayment = {};
+        expenses.forEach(e => {
+            const t = e.paymentType || 'Outros';
+            byPayment[t] = (byPayment[t] || 0) + Number(e.value);
+        });
+
+        $('paymentChart').innerHTML = Object.entries(byPayment).sort((a, b) => b[1] - a[1]).map(([t, v]) => `
+            <div class="payment-item">
+                <span class="pay-label">${t}</span>
+                <span class="pay-value">${currency(v)}</span>
+                <span class="pay-pct">${pct(v, totalOut)}%</span>
+            </div>
+        `).join('');
+    }
+
+    // ============================================================
+    // ENTRADAS
+    // ============================================================
+    function renderEntradas() {
+        const incomes = filterByMember(filterByMonth(getIncomes(), 'date'));
+        const members = getMembers();
+        const total = incomes.reduce((s, i) => s + Number(i.value), 0);
+
+        $('incomeTable').innerHTML = incomes.map(i => {
+            const member = members.find(m => m.id === i.memberId);
+            return `<tr>
+                <td>${dateStr(i.date)}</td>
+                <td>${i.bank || '-'}</td>
+                <td style="font-weight:600;color:var(--income)">${currency(i.value)}</td>
+                <td>${i.category || '-'}</td>
+                <td>${i.source || '-'}</td>
+                <td>${member ? member.name : '-'}</td>
+                <td><span class="status-badge ${i.status === 'Pg' ? 'paid' : 'pending'}">${i.status === 'Pg' ? 'Pago' : 'Pendente'}</span></td>
+                <td>
+                    <button class="btn-icon" onclick="App.editIncome('${i.id}')">&#9998;</button>
+                    <button class="btn-icon delete" onclick="App.deleteIncome('${i.id}')">&#10005;</button>
+                </td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
+
+        $('incomeTotalTable').textContent = currency(total);
+    }
+
+    // ============================================================
+    // SAÍDAS
+    // ============================================================
+    function renderSaidas() {
+        let expenses = filterByMember(filterByMonth(getExpenses(), 'date'));
+        const members = getMembers();
+
+        // Populate filters
+        const banks = [...new Set(getExpenses().map(e => e.bank).filter(Boolean))];
+        const payments = [...new Set(getExpenses().map(e => e.paymentType).filter(Boolean))];
+        const groups = [...new Set(getExpenses().map(e => {
+            const cat = CATEGORIES.find(c => c.name === e.category);
+            return cat ? cat.group : '';
+        }).filter(Boolean))];
+
+        populateSelect($('filterBank'), banks, 'Todos os Bancos');
+        populateSelect($('filterPayment'), payments, 'Tipo Pagamento');
+        populateSelect($('filterGroup'), groups, 'Todos os Grupos');
+
+        // Apply filters
+        const bankF = $('filterBank').value;
+        const payF = $('filterPayment').value;
+        const groupF = $('filterGroup').value;
+
+        if (bankF !== 'all') expenses = expenses.filter(e => e.bank === bankF);
+        if (payF !== 'all') expenses = expenses.filter(e => e.paymentType === payF);
+        if (groupF !== 'all') expenses = expenses.filter(e => {
+            const cat = CATEGORIES.find(c => c.name === e.category);
+            return cat && cat.group === groupF;
+        });
+
+        const total = expenses.reduce((s, e) => s + Number(e.value), 0);
+
+        $('expenseTable').innerHTML = expenses.map(e => {
+            const member = members.find(m => m.id === e.memberId);
+            return `<tr>
+                <td>${e.bank || '-'}</td>
+                <td>${e.paymentType || '-'}</td>
+                <td>${dateStr(e.date)}</td>
+                <td style="font-weight:600;color:var(--expense)">${currency(e.value)}</td>
+                <td>${e.installments || '-'}</td>
+                <td>${e.description || '-'}</td>
+                <td>${e.category || '-'}</td>
+                <td>${member ? member.name : '-'}</td>
+                <td><span class="status-badge ${e.status === 'Pg' ? 'paid' : 'pending'}">${e.status === 'Pg' ? 'Pago' : 'Pendente'}</span></td>
+                <td>
+                    <button class="btn-icon" onclick="App.editExpense('${e.id}')">&#9998;</button>
+                    <button class="btn-icon delete" onclick="App.deleteExpense('${e.id}')">&#10005;</button>
+                </td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma saída neste mês</td></tr>';
+
+        $('expenseTotalTable').textContent = currency(total);
+    }
+
+    function populateSelect(el, options, placeholder) {
+        const current = el.value;
+        el.innerHTML = `<option value="all">${placeholder}</option>`;
+        options.forEach(o => { el.innerHTML += `<option value="${o}">${o}</option>`; });
+        el.value = current && options.includes(current) ? current : 'all';
+    }
+
+    // ============================================================
+    // ORÇADO x REALIZADO
+    // ============================================================
+    function renderOrcamento() {
+        const expenses = filterByMember(filterByMonth(getExpenses(), 'date'));
+        const budgets = getBudgets();
+        const monthKey = state.currentYear + '-' + String(state.currentMonth + 1).padStart(2, '0');
+
+        let html = '';
+        GROUPS.forEach(group => {
+            const cats = CATEGORIES.filter(c => c.group === group);
+            const groupBudget = cats.reduce((s, c) => {
+                const b = budgets.find(b => b.category === c.name && b.monthKey === monthKey);
+                return s + (b ? Number(b.value) : 0);
+            }, 0);
+            const groupReal = cats.reduce((s, c) => {
+                return s + expenses.filter(e => e.category === c.name).reduce((ss, e) => ss + Number(e.value), 0);
+            }, 0);
+            const groupVar = groupBudget > 0 ? pct(groupBudget - groupReal, groupBudget) : (groupReal > 0 ? -100 : 0);
+
+            html += `<tr class="group-row"><td colspan="5">${group}</td></tr>`;
+            cats.forEach(c => {
+                const budget = budgets.find(b => b.category === c.name && b.monthKey === monthKey);
+                const budgetVal = budget ? Number(budget.value) : 0;
+                const realVal = expenses.filter(e => e.category === c.name).reduce((s, e) => s + Number(e.value), 0);
+                const variation = budgetVal > 0 ? pct(budgetVal - realVal, budgetVal) : (realVal > 0 ? -100 : 0);
+                const varClass = variation >= 0 ? 'variation-positive' : 'variation-negative';
+                const status = realVal === 0 ? '-' : (realVal <= budgetVal || budgetVal === 0 ? '&#10003;' : '&#9888;');
+
+                html += `<tr>
+                    <td style="padding-left:24px">${c.name}</td>
+                    <td>${budgetVal > 0 ? currency(budgetVal) : '-'}</td>
+                    <td>${realVal > 0 ? currency(realVal) : '-'}</td>
+                    <td class="${varClass}">${budgetVal > 0 || realVal > 0 ? variation + '%' : '-'}</td>
+                    <td>${status}</td>
+                </tr>`;
+            });
+        });
+
+        $('budgetTable').innerHTML = html;
+    }
+
+    // ============================================================
+    // MEMBROS
+    // ============================================================
+    function renderMembros() {
+        const members = getMembers();
+        const incomes = filterByMonth(getIncomes(), 'date');
+        const expenses = filterByMonth(getExpenses(), 'date');
+
+        $('membersGrid').innerHTML = members.map(m => {
+            const mIncome = incomes.filter(i => i.memberId === m.id).reduce((s, i) => s + Number(i.value), 0);
+            const mExpense = expenses.filter(e => e.memberId === m.id).reduce((s, e) => s + Number(e.value), 0);
+            const initial = m.name.charAt(0).toUpperCase();
+
+            return `<div class="member-card">
+                <div class="member-avatar" style="background:${m.color}">${initial}</div>
+                <div class="member-name">${m.name}</div>
+                <div class="member-role">${m.role || ''}</div>
+                <div class="member-stats">
+                    <div class="member-stat">
+                        <span class="stat-label">Receitas</span>
+                        <span class="stat-value income">${currency(mIncome)}</span>
+                    </div>
+                    <div class="member-stat">
+                        <span class="stat-label">Despesas</span>
+                        <span class="stat-value expense">${currency(mExpense)}</span>
+                    </div>
+                </div>
+                <div class="member-actions">
+                    <button class="btn-secondary" onclick="App.editMember('${m.id}')">Editar</button>
+                    <button class="btn-secondary" onclick="App.deleteMember('${m.id}')">Remover</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ============================================================
+    // PLANEJAMENTO
+    // ============================================================
+    function renderPlanejamento() {
+        // Categories table
+        $('planTable').innerHTML = CATEGORIES.map(c => `
+            <tr>
+                <td>${c.name}</td>
+                <td>${c.type}</td>
+                <td><span style="color:${GROUP_COLORS[c.group] || '#aaa'}">${c.group}</span></td>
+                <td>${c.condition}</td>
+            </tr>
+        `).join('');
+
+        // Budget inputs
+        const budgets = getBudgets();
+        const monthKey = state.currentYear + '-' + String(state.currentMonth + 1).padStart(2, '0');
+
+        $('budgetInputs').innerHTML = GROUPS.map(g => {
+            const cats = CATEGORIES.filter(c => c.group === g);
+            return cats.map(c => {
+                const b = budgets.find(b => b.category === c.name && b.monthKey === monthKey);
+                const val = b ? b.value : '';
+                return `<div class="budget-input-item">
+                    <label>${c.name}</label>
+                    <input type="number" placeholder="R$ 0" value="${val}"
+                           onchange="App.saveBudget('${c.name}','${monthKey}',this.value)">
+                </div>`;
+            }).join('');
+        }).join('');
+    }
+
+    // ============================================================
+    // MODALS
+    // ============================================================
+    function openModal(title, bodyHtml, onSave) {
+        $('modalTitle').textContent = title;
+        $('modalBody').innerHTML = bodyHtml;
+        $('modalOverlay').classList.add('open');
+        $('modalSave').onclick = () => {
+            onSave();
+            closeModal();
+        };
+    }
+
+    function closeModal() {
+        $('modalOverlay').classList.remove('open');
+        state.editingId = null;
+        state.editingType = null;
+    }
+
+    $('modalClose').addEventListener('click', closeModal);
+    $('modalCancel').addEventListener('click', closeModal);
+    $('modalOverlay').addEventListener('click', e => {
+        if (e.target === $('modalOverlay')) closeModal();
+    });
+
+    // --- Income Modal ---
+    function openIncomeModal(income) {
+        const members = getMembers();
+        const isEdit = !!income;
+        const i = income || {};
+
+        const body = `
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="fIncDate" value="${i.date || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" step="0.01" id="fIncValue" value="${i.value || ''}" placeholder="0,00">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Banco</label>
+                    <select id="fIncBank">
+                        <option value="">Selecione</option>
+                        ${BANKS.map(b => `<option value="${b}" ${i.bank === b ? 'selected' : ''}>${b}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="fIncCat">
+                        ${INCOME_CATEGORIES.map(c => `<option value="${c}" ${i.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fonte Pagadora</label>
+                    <input type="text" id="fIncSource" value="${i.source || ''}" placeholder="Ex: Empresa XYZ">
+                </div>
+                <div class="form-group">
+                    <label>Membro</label>
+                    <select id="fIncMember">
+                        ${members.map(m => `<option value="${m.id}" ${i.memberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="fIncStatus">
+                    <option value="" ${!i.status ? 'selected' : ''}>Pendente</option>
+                    <option value="Pg" ${i.status === 'Pg' ? 'selected' : ''}>Pago</option>
+                </select>
+            </div>
+        `;
+
+        openModal(isEdit ? 'Editar Entrada' : 'Nova Entrada', body, () => {
+            const data = {
+                id: i.id || uid(),
+                date: $('fIncDate').value,
+                value: parseFloat($('fIncValue').value) || 0,
+                bank: $('fIncBank').value,
+                category: $('fIncCat').value,
+                source: $('fIncSource').value,
+                memberId: $('fIncMember').value,
+                status: $('fIncStatus').value,
+            };
+
+            const items = getIncomes();
+            const idx = items.findIndex(x => x.id === data.id);
+            if (idx >= 0) items[idx] = data; else items.push(data);
+            save(KEYS.incomes, items);
+            renderCurrentPage();
+        });
+    }
+
+    // --- Expense Modal ---
+    function openExpenseModal(expense) {
+        const members = getMembers();
+        const isEdit = !!expense;
+        const e = expense || {};
+
+        const catOptions = CATEGORIES.map(c =>
+            `<option value="${c.name}" ${e.category === c.name ? 'selected' : ''}>${c.name}</option>`
+        ).join('');
+
+        const body = `
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="fExpDate" value="${e.date || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" step="0.01" id="fExpValue" value="${e.value || ''}" placeholder="0,00">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Banco</label>
+                    <select id="fExpBank">
+                        <option value="">Selecione</option>
+                        ${BANKS.map(b => `<option value="${b}" ${e.bank === b ? 'selected' : ''}>${b}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo Pagamento</label>
+                    <select id="fExpPayment">
+                        ${PAYMENT_TYPES.map(p => `<option value="${p}" ${e.paymentType === p ? 'selected' : ''}>${p}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Plano de Contas</label>
+                    <select id="fExpCat">${catOptions}</select>
+                </div>
+                <div class="form-group">
+                    <label>Parcelas</label>
+                    <input type="text" id="fExpInstall" value="${e.installments || ''}" placeholder="Ex: 3/10">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Estabelecimento</label>
+                    <input type="text" id="fExpDesc" value="${e.description || ''}" placeholder="Nome do estabelecimento">
+                </div>
+                <div class="form-group">
+                    <label>Membro</label>
+                    <select id="fExpMember">
+                        ${members.map(m => `<option value="${m.id}" ${e.memberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="fExpStatus">
+                    <option value="" ${!e.status ? 'selected' : ''}>Pendente</option>
+                    <option value="Pg" ${e.status === 'Pg' ? 'selected' : ''}>Pago</option>
+                </select>
+            </div>
+        `;
+
+        openModal(isEdit ? 'Editar Saída' : 'Nova Saída', body, () => {
+            const data = {
+                id: e.id || uid(),
+                date: $('fExpDate').value,
+                value: parseFloat($('fExpValue').value) || 0,
+                bank: $('fExpBank').value,
+                paymentType: $('fExpPayment').value,
+                category: $('fExpCat').value,
+                installments: $('fExpInstall').value,
+                description: $('fExpDesc').value,
+                memberId: $('fExpMember').value,
+                status: $('fExpStatus').value,
+            };
+
+            const items = getExpenses();
+            const idx = items.findIndex(x => x.id === data.id);
+            if (idx >= 0) items[idx] = data; else items.push(data);
+            save(KEYS.expenses, items);
+            renderCurrentPage();
+        });
+    }
+
+    // --- Member Modal ---
+    function openMemberModal(member) {
+        const isEdit = !!member;
+        const m = member || {};
+
+        const body = `
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" id="fMemName" value="${m.name || ''}" placeholder="Nome do membro">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Papel</label>
+                    <input type="text" id="fMemRole" value="${m.role || ''}" placeholder="Ex: Titular, Cônjuge">
+                </div>
+                <div class="form-group">
+                    <label>Cor</label>
+                    <input type="color" id="fMemColor" value="${m.color || '#6c5ce7'}">
+                </div>
+            </div>
+        `;
+
+        openModal(isEdit ? 'Editar Membro' : 'Novo Membro', body, () => {
+            const data = {
+                id: m.id || uid(),
+                name: $('fMemName').value || 'Sem Nome',
+                role: $('fMemRole').value,
+                color: $('fMemColor').value,
+            };
+
+            const items = getMembers();
+            const idx = items.findIndex(x => x.id === data.id);
+            if (idx >= 0) items[idx] = data; else items.push(data);
+            save(KEYS.members, items);
+            populateMemberFilter();
+            renderCurrentPage();
+        });
+    }
+
+    // --- Filter listeners ---
+    $('filterBank').addEventListener('change', renderSaidas);
+    $('filterPayment').addEventListener('change', renderSaidas);
+    $('filterGroup').addEventListener('change', renderSaidas);
+
+    // --- Button listeners ---
+    $('btnAddIncome').addEventListener('click', () => openIncomeModal(null));
+    $('btnAddExpense').addEventListener('click', () => openExpenseModal(null));
+    $('btnAddMember').addEventListener('click', () => openMemberModal(null));
+
+    // ============================================================
+    // PUBLIC API (for onclick handlers in HTML)
+    // ============================================================
+    window.App = {
+        editIncome(id) {
+            const item = getIncomes().find(i => i.id === id);
+            if (item) openIncomeModal(item);
+        },
+        deleteIncome(id) {
+            if (!confirm('Excluir esta entrada?')) return;
+            save(KEYS.incomes, getIncomes().filter(i => i.id !== id));
+            renderCurrentPage();
+        },
+        editExpense(id) {
+            const item = getExpenses().find(e => e.id === id);
+            if (item) openExpenseModal(item);
+        },
+        deleteExpense(id) {
+            if (!confirm('Excluir esta saída?')) return;
+            save(KEYS.expenses, getExpenses().filter(e => e.id !== id));
+            renderCurrentPage();
+        },
+        editMember(id) {
+            const item = getMembers().find(m => m.id === id);
+            if (item) openMemberModal(item);
+        },
+        deleteMember(id) {
+            const members = getMembers();
+            if (members.length <= 1) { alert('Precisa ter pelo menos 1 membro.'); return; }
+            if (!confirm('Remover este membro?')) return;
+            save(KEYS.members, members.filter(m => m.id !== id));
+            populateMemberFilter();
+            renderCurrentPage();
+        },
+        saveBudget(category, monthKey, value) {
+            const budgets = getBudgets();
+            const idx = budgets.findIndex(b => b.category === category && b.monthKey === monthKey);
+            const data = { category, monthKey, value: parseFloat(value) || 0 };
+            if (idx >= 0) budgets[idx] = data; else budgets.push(data);
+            save(KEYS.budgets, budgets);
+        },
+    };
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    populateMemberFilter();
+    updateMonthDisplay();
+    renderDashboard();
+
+})();
