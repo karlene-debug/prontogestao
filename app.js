@@ -817,6 +817,7 @@
         const members = getMembers();
         const isEdit = !!expense;
         const e = expense || {};
+        const isGeneratedInstallment = e.installmentParent;
 
         const catOptions = CATEGORIES.map(c =>
             `<option value="${c.name}" ${e.category === c.name ? 'selected' : ''}>${c.name}</option>`
@@ -825,17 +826,17 @@
         const body = `
             <div class="form-row">
                 <div class="form-group">
-                    <label>Data</label>
+                    <label>Data da Compra</label>
                     <input type="date" id="fExpDate" value="${e.date || ''}">
                 </div>
                 <div class="form-group">
-                    <label>Valor</label>
+                    <label>Valor da Parcela</label>
                     <input type="number" step="0.01" id="fExpValue" value="${e.value || ''}" placeholder="0,00">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Banco</label>
+                    <label>Banco / Cartão</label>
                     <select id="fExpBank">
                         <option value="">Selecione</option>
                         ${BANKS.map(b => `<option value="${b}" ${e.bank === b ? 'selected' : ''}>${b}</option>`).join('')}
@@ -850,36 +851,49 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Plano de Contas</label>
-                    <select id="fExpCat">${catOptions}</select>
+                    <label>Estabelecimento</label>
+                    <input type="text" id="fExpDesc" value="${e.description || ''}" placeholder="Nome do estabelecimento">
                 </div>
                 <div class="form-group">
-                    <label>Parcelas</label>
-                    <input type="text" id="fExpInstall" value="${e.installments || ''}" placeholder="Ex: 3/10">
+                    <label>Plano de Contas</label>
+                    <select id="fExpCat">${catOptions}</select>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Estabelecimento</label>
-                    <input type="text" id="fExpDesc" value="${e.description || ''}" placeholder="Nome do estabelecimento">
+                    <label>Parcelado?</label>
+                    <select id="fExpIsInstallment" ${isGeneratedInstallment ? 'disabled' : ''}>
+                        <option value="nao" ${!e.installments ? 'selected' : ''}>Não (à vista)</option>
+                        <option value="sim" ${e.installments ? 'selected' : ''}>Sim, parcelado</option>
+                    </select>
                 </div>
+                <div class="form-group" id="installmentCountGroup" style="${e.installments ? '' : 'display:none'}">
+                    <label>Quantidade de Parcelas</label>
+                    <input type="number" min="2" max="48" id="fExpInstallCount" value="${e.installments ? e.installments.split('/')[1] || '' : ''}" placeholder="Ex: 10" ${isGeneratedInstallment ? 'disabled' : ''}>
+                </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label>Membro</label>
                     <select id="fExpMember">
                         ${members.map(m => `<option value="${m.id}" ${e.memberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="fExpStatus">
+                        <option value="" ${!e.status ? 'selected' : ''}>Pendente</option>
+                        <option value="Pg" ${e.status === 'Pg' ? 'selected' : ''}>Pago</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="fExpStatus">
-                    <option value="" ${!e.status ? 'selected' : ''}>Pendente</option>
-                    <option value="Pg" ${e.status === 'Pg' ? 'selected' : ''}>Pago</option>
-                </select>
-            </div>
+            ${isGeneratedInstallment ? `<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Parcela ${e.installments} - gerada automaticamente. Edite valor e status.</p>` : ''}
         `;
 
         openModal(isEdit ? 'Editar Saída' : 'Nova Saída', body, () => {
+            const isInstallment = $('fExpIsInstallment').value === 'sim';
+            const installCount = parseInt($('fExpInstallCount').value) || 0;
+
             const data = {
                 id: e.id || uid(),
                 date: $('fExpDate').value,
@@ -887,18 +901,63 @@
                 bank: $('fExpBank').value,
                 paymentType: $('fExpPayment').value,
                 category: $('fExpCat').value,
-                installments: $('fExpInstall').value,
+                installments: isInstallment && installCount > 1 ? `1/${installCount}` : '',
                 description: $('fExpDesc').value,
                 memberId: $('fExpMember').value,
                 status: $('fExpStatus').value,
+                installmentParent: e.installmentParent || null,
             };
 
-            const items = getExpenses();
-            const idx = items.findIndex(x => x.id === data.id);
-            if (idx >= 0) items[idx] = data; else items.push(data);
-            save(KEYS.expenses, items);
+            if (!isEdit && isInstallment && installCount > 1) {
+                generateInstallmentExpenses(data, installCount);
+            } else {
+                const items = getExpenses();
+                const idx = items.findIndex(x => x.id === data.id);
+                if (idx >= 0) items[idx] = data; else items.push(data);
+                save(KEYS.expenses, items);
+            }
             renderCurrentPage();
         });
+
+        // Toggle installment field
+        setTimeout(() => {
+            const sel = $('fExpIsInstallment');
+            if (!sel) return;
+            sel.addEventListener('change', () => {
+                $('installmentCountGroup').style.display = sel.value === 'sim' ? '' : 'none';
+            });
+        }, 50);
+    }
+
+    // --- Generate Installment Expenses ---
+    function generateInstallmentExpenses(data, count) {
+        const items = getExpenses();
+        const parentId = uid();
+        const baseDate = new Date(data.date + 'T00:00:00');
+        const baseDay = baseDate.getDate();
+
+        for (let i = 0; i < count; i++) {
+            let m = baseDate.getMonth() + i;
+            let y = baseDate.getFullYear();
+            while (m > 11) { m -= 12; y++; }
+            const mm = String(m + 1).padStart(2, '0');
+            const dd = String(Math.min(baseDay, 28)).padStart(2, '0');
+
+            items.push({
+                id: uid(),
+                date: `${y}-${mm}-${dd}`,
+                value: data.value,
+                bank: data.bank,
+                paymentType: data.paymentType,
+                category: data.category,
+                installments: `${i + 1}/${count}`,
+                description: data.description,
+                memberId: data.memberId,
+                status: i === 0 ? data.status : '',
+                installmentParent: parentId,
+            });
+        }
+        save(KEYS.expenses, items);
     }
 
     // --- Member Modal ---
