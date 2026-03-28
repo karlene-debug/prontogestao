@@ -709,6 +709,50 @@ body {
 }
 .insight-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
 
+/* ---- CARD HEADER ROW ---- */
+.card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.card-header-row h3 { margin-bottom: 0; }
+.card-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 0.78rem;
+}
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.toggle-label input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* ---- CUSTOM CATEGORY BADGE ---- */
+.custom-badge {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(108,92,231,0.15);
+    color: var(--accent);
+    margin-left: 6px;
+    font-weight: 600;
+}
+
 .status-badge {
     padding: 3px 10px;
     border-radius: 12px;

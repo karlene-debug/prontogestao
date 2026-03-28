@@ -407,7 +407,15 @@
                     </div>
                 </div>
                 <div class="card">
-                    <h3>Categorias e Classificação</h3>
+                    <div class="card-header-row">
+                        <h3>Categorias e Classificação</h3>
+                        <div class="card-header-actions">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="showAllCategories"> Mostrar zeradas
+                            </label>
+                            <button class="btn-primary btn-sm" id="btnAddCategory">+ Nova Conta</button>
+                        </div>
+                    </div>
                     <div class="table-container">
                         <table class="data-table">
                             <thead>
@@ -416,6 +424,8 @@
                                     <th>Tipo</th>
                                     <th>Grupo</th>
                                     <th>Condição</th>
+                                    <th>Usado</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="planTable"></tbody>

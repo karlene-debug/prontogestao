@@ -10,6 +10,7 @@
         members: 'pg_members',
         incomes: 'pg_incomes',
         expenses: 'pg_expenses',
+        customCategories: 'pg_custom_categories',
         budgets: 'pg_budgets',
     };
 
@@ -55,6 +56,9 @@
         const arrow = isActive ? (s.dir === 'asc' ? ' &#9650;' : ' &#9660;') : ' <span style="opacity:0.3">&#9650;</span>';
         return `<th class="sortable" onclick="App.toggleSort('${tableName}','${field}')">${label}${arrow}</th>`;
     }
+    function getCustomCategories() { return load(KEYS.customCategories); }
+    function getAllCategories() { return [...CATEGORIES, ...getCustomCategories()]; }
+
     function dateStr(d) {
         if (!d) return '';
         const dt = new Date(d + 'T00:00:00');
@@ -227,7 +231,7 @@
         // Regra 50/30/20
         const byCondition = { 'Necessidade': 0, 'Desejo': 0, 'Financeiro': 0, 'Dívidas': 0 };
         expenses.forEach(e => {
-            const cat = CATEGORIES.find(c => c.name === e.category);
+            const cat = getAllCategories().find(c => c.name === e.category);
             if (cat) byCondition[cat.condition] = (byCondition[cat.condition] || 0) + Number(e.value);
         });
 
@@ -250,7 +254,7 @@
         // Gastos por Grupo
         const byGroup = {};
         expenses.forEach(e => {
-            const cat = CATEGORIES.find(c => c.name === e.category);
+            const cat = getAllCategories().find(c => c.name === e.category);
             const g = cat ? cat.group : 'Outros';
             byGroup[g] = (byGroup[g] || 0) + Number(e.value);
         });
@@ -429,7 +433,7 @@
         const banks = [...new Set(getExpenses().map(e => e.bank).filter(Boolean))];
         const payments = [...new Set(getExpenses().map(e => e.paymentType).filter(Boolean))];
         const groups = [...new Set(getExpenses().map(e => {
-            const cat = CATEGORIES.find(c => c.name === e.category);
+            const cat = getAllCategories().find(c => c.name === e.category);
             return cat ? cat.group : '';
         }).filter(Boolean))];
 
@@ -446,7 +450,7 @@
         if (bankF !== 'all') expenses = expenses.filter(e => e.bank === bankF);
         if (payF !== 'all') expenses = expenses.filter(e => e.paymentType === payF);
         if (groupF !== 'all') expenses = expenses.filter(e => {
-            const cat = CATEGORIES.find(c => c.name === e.category);
+            const cat = getAllCategories().find(c => c.name === e.category);
             return cat && cat.group === groupF;
         });
         if (searchTerm) expenses = expenses.filter(e =>
@@ -456,7 +460,7 @@
 
         const total = expenses.reduce((s, e) => s + Number(e.value), 0);
         const fixo = expenses.filter(e => {
-            const cat = CATEGORIES.find(c => c.name === e.category);
+            const cat = getAllCategories().find(c => c.name === e.category);
             return cat && cat.type === 'Fixo';
         }).reduce((s, e) => s + Number(e.value), 0);
         const variavel = total - fixo;
@@ -520,7 +524,7 @@
 
         let html = '';
         GROUPS.forEach(group => {
-            const cats = CATEGORIES.filter(c => c.group === group);
+            const cats = getAllCategories().filter(c => c.group === group);
             const groupBudget = cats.reduce((s, c) => {
                 const b = budgets.find(b => b.category === c.name && b.monthKey === monthKey);
                 return s + (b ? Number(b.value) : 0);
@@ -591,23 +595,44 @@
     // PLANEJAMENTO
     // ============================================================
     function renderPlanejamento() {
-        // Categories table
-        $('planTable').innerHTML = CATEGORIES.map(c => `
-            <tr>
-                <td>${c.name}</td>
+        const allCats = getAllCategories();
+        const allExpenses = getExpenses();
+        const showAll = $('showAllCategories').checked;
+
+        // Check which categories have been used
+        const usedCats = new Set(allExpenses.map(e => e.category));
+        const customCats = getCustomCategories();
+        const customNames = new Set(customCats.map(c => c.name));
+
+        // Categories table - filter zeradas if toggle off
+        const catsToShow = showAll ? allCats : allCats.filter(c => usedCats.has(c.name));
+
+        let prevGroup = '';
+        $('planTable').innerHTML = catsToShow.map(c => {
+            const isCustom = customNames.has(c.name);
+            const used = usedCats.has(c.name);
+            const groupHeader = c.group !== prevGroup ? `<tr class="group-row"><td colspan="6">${c.group}</td></tr>` : '';
+            prevGroup = c.group;
+            return groupHeader + `<tr>
+                <td>${c.name}${isCustom ? '<span class="custom-badge">Custom</span>' : ''}</td>
                 <td>${c.type}</td>
                 <td><span style="color:${GROUP_COLORS[c.group] || '#aaa'}">${c.group}</span></td>
                 <td>${c.condition}</td>
-            </tr>
-        `).join('');
+                <td style="color:${used ? 'var(--income)' : 'var(--text-muted)'}">${used ? 'Sim' : '-'}</td>
+                <td>${isCustom ? `<button class="btn-action danger" onclick="App.deleteCategory('${c.name}')">Excluir</button>` : ''}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma categoria com uso. Ative "Mostrar zeradas" para ver todas.</td></tr>';
 
-        // Budget inputs
+        // Budget inputs - only used categories
         const budgets = getBudgets();
         const monthKey = state.currentYear + '-' + String(state.currentMonth + 1).padStart(2, '0');
+        const budgetCats = showAll ? allCats : allCats.filter(c => usedCats.has(c.name) || budgets.some(b => b.category === c.name && b.monthKey === monthKey && b.value > 0));
 
         $('budgetInputs').innerHTML = GROUPS.map(g => {
-            const cats = CATEGORIES.filter(c => c.group === g);
-            return cats.map(c => {
+            const cats = budgetCats.filter(c => c.group === g);
+            if (cats.length === 0) return '';
+            return `<div style="grid-column:1/-1;margin-top:8px"><strong style="font-size:0.78rem;color:${GROUP_COLORS[g] || 'var(--text-muted)'}">${g}</strong></div>` +
+            cats.map(c => {
                 const b = budgets.find(b => b.category === c.name && b.monthKey === monthKey);
                 const val = b ? b.value : '';
                 return `<div class="budget-input-item">
@@ -617,6 +642,55 @@
                 </div>`;
             }).join('');
         }).join('');
+    }
+
+    // Category modal
+    function openCategoryModal() {
+        const body = `
+            <div class="form-group">
+                <label>Nome da Conta</label>
+                <input type="text" id="fCatName" placeholder="Ex: Seguro Pet">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo de Custo</label>
+                    <select id="fCatType">
+                        <option value="Variável">Variável</option>
+                        <option value="Fixo">Fixo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Grupo</label>
+                    <select id="fCatGroup">
+                        ${GROUPS.map(g => `<option value="${g}">${g}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Condição</label>
+                <select id="fCatCondition">
+                    ${CONDITIONS.map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+            </div>
+        `;
+
+        openModal('Nova Conta', body, () => {
+            const name = $('fCatName').value.trim();
+            if (!name) return;
+            const existing = getAllCategories().find(c => c.name.toLowerCase() === name.toLowerCase());
+            if (existing) { alert('Já existe uma conta com esse nome.'); return; }
+
+            const cat = {
+                name: name,
+                type: $('fCatType').value,
+                group: $('fCatGroup').value,
+                condition: $('fCatCondition').value,
+            };
+            const customs = getCustomCategories();
+            customs.push(cat);
+            save(KEYS.customCategories, customs);
+            renderPlanejamento();
+        });
     }
 
     // ============================================================
@@ -767,7 +841,7 @@
 
         // Check investimentos
         const investTotal = allExpenses.filter(e => {
-            const cat = CATEGORIES.find(c => c.name === e.category);
+            const cat = getAllCategories().find(c => c.name === e.category);
             return cat && cat.condition === 'Financeiro';
         }).reduce((s, e) => s + Number(e.value), 0);
         if (investTotal > 0) {
@@ -986,7 +1060,7 @@
         const e = expense || {};
         const isGeneratedInstallment = e.installmentParent;
 
-        const catOptions = CATEGORIES.map(c =>
+        const catOptions = getAllCategories().map(c =>
             `<option value="${c.name}" ${e.category === c.name ? 'selected' : ''}>${c.name}</option>`
         ).join('');
 
@@ -1180,6 +1254,10 @@
     $('btnAddIncome').addEventListener('click', () => openIncomeModal(null));
     $('btnAddExpense').addEventListener('click', () => openExpenseModal(null));
     $('btnAddMember').addEventListener('click', () => openMemberModal(null));
+    $('btnAddCategory').addEventListener('click', () => openCategoryModal());
+    $('showAllCategories').addEventListener('change', () => {
+        if (state.currentPage === 'planejamento') renderPlanejamento();
+    });
 
     // ============================================================
     // PUBLIC API (for onclick handlers in HTML)
@@ -1247,6 +1325,13 @@
             const data = { category, monthKey, value: parseFloat(value) || 0 };
             if (idx >= 0) budgets[idx] = data; else budgets.push(data);
             save(KEYS.budgets, budgets);
+        },
+        deleteCategory(name) {
+            const customs = getCustomCategories();
+            if (!customs.find(c => c.name === name)) { alert('Só é possível excluir contas customizadas.'); return; }
+            if (!confirm(`Excluir a conta "${name}"?`)) return;
+            save(KEYS.customCategories, customs.filter(c => c.name !== name));
+            renderPlanejamento();
         },
         toggleSort(tableName, field) {
             const s = state.sort[tableName];
