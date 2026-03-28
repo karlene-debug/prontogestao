@@ -982,7 +982,27 @@
             } else {
                 const items = getIncomes();
                 const idx = items.findIndex(x => x.id === data.id);
-                if (idx >= 0) items[idx] = data; else items.push(data);
+                if (idx >= 0) {
+                    const parentId = i.recurrenceParent;
+                    if (parentId && isEdit) {
+                        const siblings = items.filter(x => x.recurrenceParent === parentId && x.id !== data.id);
+                        if (siblings.length > 0) {
+                            const applyAll = confirm('Essa entrada faz parte de uma recorrência.\n\nAplicar a alteração em TODAS?\n\n• OK = Alterar todas\n• Cancelar = Alterar só esta');
+                            if (applyAll) {
+                                siblings.forEach(sib => {
+                                    sib.value = data.value;
+                                    sib.bank = data.bank;
+                                    sib.category = data.category;
+                                    sib.source = data.source;
+                                    sib.memberId = data.memberId;
+                                });
+                            }
+                        }
+                    }
+                    items[idx] = data;
+                } else {
+                    items.push(data);
+                }
                 save(KEYS.incomes, items);
             }
             renderCurrentPage();
@@ -1154,7 +1174,28 @@
             } else {
                 const items = getExpenses();
                 const idx = items.findIndex(x => x.id === data.id);
-                if (idx >= 0) items[idx] = data; else items.push(data);
+                if (idx >= 0) {
+                    const parentId = e.installmentParent;
+                    if (parentId && isEdit) {
+                        const siblings = items.filter(x => x.installmentParent === parentId && x.id !== data.id);
+                        if (siblings.length > 0) {
+                            const applyAll = confirm('Essa saída faz parte de um parcelamento.\n\nAplicar a alteração em TODAS as parcelas?\n\n• OK = Alterar todas\n• Cancelar = Alterar só esta');
+                            if (applyAll) {
+                                siblings.forEach(sib => {
+                                    sib.value = data.value;
+                                    sib.bank = data.bank;
+                                    sib.paymentType = data.paymentType;
+                                    sib.category = data.category;
+                                    sib.description = data.description;
+                                    sib.memberId = data.memberId;
+                                });
+                            }
+                        }
+                    }
+                    items[idx] = data;
+                } else {
+                    items.push(data);
+                }
                 save(KEYS.expenses, items);
             }
             renderCurrentPage();
@@ -1276,8 +1317,22 @@
             renderCurrentPage();
         },
         deleteIncome(id) {
+            const items = getIncomes();
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            if (item.recurrenceParent) {
+                const siblings = items.filter(i => i.recurrenceParent === item.recurrenceParent);
+                if (siblings.length > 1) {
+                    const deleteAll = confirm('Essa entrada faz parte de uma recorrência.\n\nExcluir TODAS as parcelas?\n\n• OK = Excluir todas\n• Cancelar = Excluir só esta');
+                    if (deleteAll) {
+                        save(KEYS.incomes, items.filter(i => i.recurrenceParent !== item.recurrenceParent));
+                        renderCurrentPage();
+                        return;
+                    }
+                }
+            }
             if (!confirm('Excluir esta entrada?')) return;
-            save(KEYS.incomes, getIncomes().filter(i => i.id !== id));
+            save(KEYS.incomes, items.filter(i => i.id !== id));
             renderCurrentPage();
         },
         duplicateIncome(id) {
@@ -1294,8 +1349,22 @@
             if (item) openExpenseModal(item);
         },
         deleteExpense(id) {
+            const items = getExpenses();
+            const item = items.find(e => e.id === id);
+            if (!item) return;
+            if (item.installmentParent) {
+                const siblings = items.filter(e => e.installmentParent === item.installmentParent);
+                if (siblings.length > 1) {
+                    const deleteAll = confirm('Essa saída faz parte de um parcelamento.\n\nExcluir TODAS as parcelas?\n\n• OK = Excluir todas\n• Cancelar = Excluir só esta');
+                    if (deleteAll) {
+                        save(KEYS.expenses, items.filter(e => e.installmentParent !== item.installmentParent));
+                        renderCurrentPage();
+                        return;
+                    }
+                }
+            }
             if (!confirm('Excluir esta saída?')) return;
-            save(KEYS.expenses, getExpenses().filter(e => e.id !== id));
+            save(KEYS.expenses, items.filter(e => e.id !== id));
             renderCurrentPage();
         },
         duplicateExpense(id) {
