@@ -215,6 +215,7 @@
 
     // --- GERAR PARCELAS FUTURAS ---
     // Para cada despesa com parcelas (ex: "2/10"), gerar os meses seguintes
+    // E definir installmentParent para agrupar as parcelas
     const baseExpenses = [...expenses];
     baseExpenses.forEach(e => {
         if (!e.installments || !e.installments.includes('/')) return;
@@ -222,6 +223,10 @@
         const current = parseInt(parts[0]);
         const total = parseInt(parts[1]);
         if (isNaN(current) || isNaN(total) || current >= total) return;
+
+        // Define o parentId para agrupar
+        const parentId = 'inst_' + e.id;
+        e.installmentParent = parentId;
 
         const baseDate = new Date(e.date + 'T00:00:00');
         const baseDay = baseDate.getDate();
@@ -244,6 +249,7 @@
                 description: e.description,
                 memberId: e.memberId,
                 status: '',
+                installmentParent: parentId,
             });
         }
     });

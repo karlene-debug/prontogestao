@@ -35,6 +35,12 @@
         return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     function pct(part, total) { return total === 0 ? 0 : Math.round((part / total) * 100); }
+    function parseValue(input) {
+        if (!input) return 0;
+        const cleaned = String(input).replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : Math.round(num * 100) / 100;
+    }
 
     // --- Sorting ---
     function sortItems(items, tableName, defaultField) {
@@ -909,7 +915,7 @@
                 </div>
                 <div class="form-group">
                     <label>Valor</label>
-                    <input type="number" step="0.01" id="fIncValue" value="${i.value || ''}" placeholder="0,00">
+                    <input type="text" inputmode="decimal" id="fIncValue" value="${i.value || ''}" placeholder="0,00">
                 </div>
             </div>
             <div class="form-row" id="recurrenceRow" style="display:none">
@@ -970,7 +976,7 @@
             const data = {
                 id: i.id || uid(),
                 date: $('fIncDate').value,
-                value: parseFloat($('fIncValue').value) || 0,
+                value: parseValue($('fIncValue').value),
                 bank: $('fIncBank').value,
                 category: $('fIncCat').value,
                 source: $('fIncSource').value,
@@ -1097,7 +1103,7 @@
                 </div>
                 <div class="form-group">
                     <label>Valor da Parcela</label>
-                    <input type="number" step="0.01" id="fExpValue" value="${e.value || ''}" placeholder="0,00">
+                    <input type="text" inputmode="decimal" id="fExpValue" value="${e.value || ''}" placeholder="0,00">
                 </div>
             </div>
             <div class="form-row">
@@ -1163,7 +1169,7 @@
             const data = {
                 id: e.id || uid(),
                 date: $('fExpDate').value,
-                value: parseFloat($('fExpValue').value) || 0,
+                value: parseValue($('fExpValue').value),
                 bank: $('fExpBank').value,
                 paymentType: $('fExpPayment').value,
                 category: $('fExpCat').value,
@@ -1408,7 +1414,7 @@
         saveBudget(category, monthKey, value) {
             const budgets = getBudgets();
             const idx = budgets.findIndex(b => b.category === category && b.monthKey === monthKey);
-            const data = { category, monthKey, value: parseFloat(value) || 0 };
+            const data = { category, monthKey, value: parseValue(value) };
             if (idx >= 0) budgets[idx] = data; else budgets.push(data);
             save(KEYS.budgets, budgets);
         },
@@ -1476,7 +1482,7 @@
             $('faturaCard').style.display = 'none';
         },
         conferirFatura() {
-            const valor = parseFloat($('faturaValor').value);
+            const valor = parseValue($('faturaValor').value);
             const banco = $('faturaBanco').value;
             if (!valor || !banco) { alert('Informe o valor e o banco da fatura.'); return; }
 
