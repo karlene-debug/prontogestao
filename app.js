@@ -386,9 +386,7 @@
             ${sortHeader('incomes', 'category', 'Categoria')}
             ${sortHeader('incomes', 'source', 'Fonte')}
             ${sortHeader('incomes', 'recurrenceType', 'Tipo')}
-            <th>Membro</th>
-            <th>Recebimento</th>
-            <th>Ações</th>
+            <th class="actions-header">Ações</th>
         </tr>`;
 
         $('incomeTable').innerHTML = incomes.map(i => {
@@ -403,18 +401,15 @@
                 <td>${i.category || '-'}</td>
                 <td>${i.source || '-'}</td>
                 <td>${typeLabel}</td>
-                <td>${member ? member.name : '-'}</td>
-                <td>
-                    <button class="btn-status ${i.status === 'Pg' ? 'confirmed' : ''}" onclick="App.toggleIncomeStatus('${i.id}')" title="${i.status === 'Pg' ? 'Recebido - clique para desfazer' : 'Clique para confirmar recebimento'}">
-                        ${i.status === 'Pg' ? '&#10003; Recebido' : '&#9711; Confirmar'}
-                    </button>
-                </td>
                 <td class="actions-cell">
+                    <button class="btn-status ${i.status === 'Pg' ? 'confirmed' : ''}" onclick="App.toggleIncomeStatus('${i.id}')">
+                        ${i.status === 'Pg' ? '&#10003; Recebido' : '&#9711; Receber'}
+                    </button>
                     <button class="btn-action edit" onclick="App.editIncome('${i.id}')">Editar</button>
                     <button class="btn-action danger" onclick="App.deleteIncome('${i.id}')">Excluir</button>
                 </td>
             </tr>`;
-        }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
+        }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
 
         // Summary cards
         $('incTotalCard').textContent = currency(total);
@@ -477,9 +472,7 @@
             ${sortHeader('expenses', 'installments', 'Parcelas')}
             ${sortHeader('expenses', 'description', 'Estabelecimento')}
             ${sortHeader('expenses', 'category', 'Plano de Contas')}
-            <th>Membro</th>
-            ${sortHeader('expenses', 'status', 'Status')}
-            <th>Ações</th>
+            <th class="actions-header">Ações</th>
         </tr>`;
 
         $('expenseTable').innerHTML = expenses.map(e => {
@@ -492,13 +485,10 @@
                 <td>${e.installments || '-'}</td>
                 <td>${e.description || '-'}</td>
                 <td>${e.category || '-'}</td>
-                <td>${member ? member.name : '-'}</td>
-                <td>
-                    <button class="btn-status ${e.status === 'Pg' ? 'confirmed' : ''}" onclick="App.toggleExpenseStatus('${e.id}')" title="${e.status === 'Pg' ? 'Pago - clique para desfazer' : 'Clique para confirmar pagamento'}">
-                        ${e.status === 'Pg' ? '&#10003; Pago' : '&#9711; Confirmar'}
-                    </button>
-                </td>
                 <td class="actions-cell">
+                    <button class="btn-status ${e.status === 'Pg' ? 'confirmed' : ''}" onclick="App.toggleExpenseStatus('${e.id}')">
+                        ${e.status === 'Pg' ? '&#10003; Pago' : '&#9711; Pagar'}
+                    </button>
                     <button class="btn-action edit" onclick="App.editExpense('${e.id}')">Editar</button>
                     <button class="btn-action danger" onclick="App.deleteExpense('${e.id}')">Excluir</button>
                 </td>
