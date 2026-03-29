@@ -1452,7 +1452,14 @@
             const checkboxes = document.querySelectorAll('.exp-row-check');
             state.selectedExpenses = new Set();
             checkboxes.forEach(cb => { if (cb.checked) state.selectedExpenses.add(cb.dataset.id); });
-            $('bulkCount').textContent = state.selectedExpenses.size + ' selecionados';
+            const count = state.selectedExpenses.size;
+            if (count === 0) {
+                $('bulkCount').textContent = '0 selecionados';
+            } else {
+                const items = getExpenses();
+                const subtotal = items.filter(e => state.selectedExpenses.has(e.id)).reduce((s, e) => s + Number(e.value), 0);
+                $('bulkCount').innerHTML = `${count} selecionados &mdash; <strong style="color:var(--expense)">${currency(subtotal)}</strong>`;
+            }
         },
         bulkPaySelected() {
             if (state.selectedExpenses.size === 0) { alert('Selecione pelo menos um item.'); return; }
