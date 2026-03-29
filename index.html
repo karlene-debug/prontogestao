@@ -221,6 +221,25 @@
                         <option value="parcelada">Parcelada</option>
                         <option value="avulsa">Avulsa</option>
                     </select>
+                    <select id="filterIncStatus" class="filter-select">
+                        <option value="all">Todos os Status</option>
+                        <option value="pending">Pendentes</option>
+                        <option value="paid">Recebidos</option>
+                    </select>
+                </div>
+
+                <!-- Ações em massa -->
+                <div class="bulk-actions" id="bulkActionsInc">
+                    <div class="bulk-left">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="selectAllIncomes"> Selecionar todos
+                        </label>
+                        <span class="bulk-count" id="bulkCountInc">0 selecionados</span>
+                    </div>
+                    <div class="bulk-right">
+                        <button class="btn-action edit" onclick="App.bulkReceiveSelected()">Marcar como Recebido</button>
+                        <button class="btn-action" onclick="App.bulkUnreceiveSelected()">Desmarcar Recebido</button>
+                    </div>
                 </div>
 
                 <div class="table-container">
