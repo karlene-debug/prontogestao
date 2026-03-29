@@ -23,6 +23,7 @@
         editingId: null,
         editingType: null,
         sort: {}, // { tableName: { field: 'date', dir: 'asc' } }
+        selectedExpenses: new Set(),
     };
 
     // --- Helpers ---
@@ -440,6 +441,7 @@
         const bankF = $('filterBank').value;
         const payF = $('filterPayment').value;
         const groupF = $('filterGroup').value;
+        const statusF = $('filterStatus').value;
         const searchTerm = ($('searchExpense').value || '').toLowerCase().trim();
 
         if (bankF !== 'all') expenses = expenses.filter(e => e.bank === bankF);
@@ -448,6 +450,8 @@
             const cat = getAllCategories().find(c => c.name === e.category);
             return cat && cat.group === groupF;
         });
+        if (statusF === 'pending') expenses = expenses.filter(e => e.status !== 'Pg');
+        if (statusF === 'paid') expenses = expenses.filter(e => e.status === 'Pg');
         if (searchTerm) expenses = expenses.filter(e =>
             (e.description || '').toLowerCase().includes(searchTerm) ||
             (e.category || '').toLowerCase().includes(searchTerm)
@@ -465,6 +469,7 @@
 
         // Sortable headers
         $('expenseHead').innerHTML = `<tr>
+            <th style="width:30px"><input type="checkbox" class="exp-checkbox" id="selectAllHead" onchange="App.toggleSelectAll(this.checked)"></th>
             ${sortHeader('expenses', 'bank', 'Banco')}
             ${sortHeader('expenses', 'paymentType', 'Tipo Pgto')}
             ${sortHeader('expenses', 'date', 'Data')}
@@ -477,7 +482,9 @@
 
         $('expenseTable').innerHTML = expenses.map(e => {
             const member = members.find(m => m.id === e.memberId);
-            return `<tr>
+            const checked = state.selectedExpenses && state.selectedExpenses.has(e.id) ? 'checked' : '';
+            return `<tr class="${e.status === 'Pg' ? 'row-paid' : ''}">
+                <td><input type="checkbox" class="exp-checkbox exp-row-check" data-id="${e.id}" ${checked} onchange="App.updateBulkCount()"></td>
                 <td>${e.bank || '-'}</td>
                 <td>${e.paymentType || '-'}</td>
                 <td>${dateStr(e.date)}</td>
@@ -1283,7 +1290,11 @@
     $('filterBank').addEventListener('change', renderSaidas);
     $('filterPayment').addEventListener('change', renderSaidas);
     $('filterGroup').addEventListener('change', renderSaidas);
+    $('filterStatus').addEventListener('change', renderSaidas);
     $('searchExpense').addEventListener('input', renderSaidas);
+    $('selectAllExpenses').addEventListener('change', (e) => {
+        App.toggleSelectAll(e.target.checked);
+    });
     $('filterIncCat').addEventListener('change', renderEntradas);
     $('filterIncBank').addEventListener('change', renderEntradas);
     $('filterIncType').addEventListener('change', renderEntradas);
@@ -1416,6 +1427,88 @@
                 state.sort[tableName] = { field, dir: 'asc' };
             }
             renderCurrentPage();
+        },
+        // --- Bulk actions ---
+        toggleSelectAll(checked) {
+            const checkboxes = document.querySelectorAll('.exp-row-check');
+            state.selectedExpenses = new Set();
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                if (checked) state.selectedExpenses.add(cb.dataset.id);
+            });
+            const headCb = $('selectAllHead');
+            if (headCb) headCb.checked = checked;
+            const sideCb = $('selectAllExpenses');
+            if (sideCb) sideCb.checked = checked;
+            this.updateBulkCount();
+        },
+        updateBulkCount() {
+            const checkboxes = document.querySelectorAll('.exp-row-check');
+            state.selectedExpenses = new Set();
+            checkboxes.forEach(cb => { if (cb.checked) state.selectedExpenses.add(cb.dataset.id); });
+            $('bulkCount').textContent = state.selectedExpenses.size + ' selecionados';
+        },
+        bulkPaySelected() {
+            if (state.selectedExpenses.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            const items = getExpenses();
+            items.forEach(e => { if (state.selectedExpenses.has(e.id)) e.status = 'Pg'; });
+            save(KEYS.expenses, items);
+            state.selectedExpenses = new Set();
+            renderSaidas();
+        },
+        bulkUnpaySelected() {
+            if (state.selectedExpenses.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            const items = getExpenses();
+            items.forEach(e => { if (state.selectedExpenses.has(e.id)) e.status = ''; });
+            save(KEYS.expenses, items);
+            state.selectedExpenses = new Set();
+            renderSaidas();
+        },
+        openFatura() {
+            $('faturaCard').style.display = '';
+            // Populate banco select
+            const banks = [...new Set(getExpenses().map(e => e.bank).filter(Boolean))];
+            $('faturaBanco').innerHTML = banks.map(b => `<option value="${b}">${b}</option>`).join('');
+            $('faturaResult').innerHTML = '';
+            $('faturaValor').value = '';
+        },
+        closeFatura() {
+            $('faturaCard').style.display = 'none';
+        },
+        conferirFatura() {
+            const valor = parseFloat($('faturaValor').value);
+            const banco = $('faturaBanco').value;
+            if (!valor || !banco) { alert('Informe o valor e o banco da fatura.'); return; }
+
+            const items = getExpenses();
+            const monthItems = filterByMember(filterByMonth(items, 'date'));
+            const matching = monthItems.filter(e => e.bank === banco && e.status !== 'Pg');
+            const totalMatching = matching.reduce((s, e) => s + Number(e.value), 0);
+            const diff = Math.abs(valor - totalMatching);
+
+            if (matching.length === 0) {
+                $('faturaResult').innerHTML = `<div class="fatura-result-ok fatura-diff">Nenhuma despesa pendente encontrada para ${banco} neste mês.</div>`;
+                return;
+            }
+
+            // Mark all matching as paid
+            matching.forEach(m => {
+                const item = items.find(e => e.id === m.id);
+                if (item) item.status = 'Pg';
+            });
+            save(KEYS.expenses, items);
+
+            if (diff < 0.01) {
+                $('faturaResult').innerHTML = `<div class="fatura-result-ok fatura-match">Fatura conferida! ${matching.length} itens marcados como pago. Valor bateu: ${currency(valor)}</div>`;
+            } else {
+                $('faturaResult').innerHTML = `<div class="fatura-result-ok fatura-diff">
+                    ${matching.length} itens marcados como pago.<br>
+                    Fatura: ${currency(valor)} | Itens: ${currency(totalMatching)}<br>
+                    <strong>Diferença: ${currency(diff)}</strong> - verifique se há lançamentos faltando.
+                </div>`;
+            }
+            state.selectedExpenses = new Set();
+            renderSaidas();
         },
     };
 
