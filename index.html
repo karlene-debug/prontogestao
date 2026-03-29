@@ -275,6 +275,50 @@
                     <select id="filterBank" class="filter-select"><option value="all">Todos os Bancos</option></select>
                     <select id="filterPayment" class="filter-select"><option value="all">Tipo Pagamento</option></select>
                     <select id="filterGroup" class="filter-select"><option value="all">Todos os Grupos</option></select>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="all">Todos os Status</option>
+                        <option value="pending">Pendentes</option>
+                        <option value="paid">Pagos</option>
+                    </select>
+                </div>
+
+                <!-- Conferência de Fatura -->
+                <div class="card fatura-card" id="faturaCard" style="display:none">
+                    <div class="card-header-row">
+                        <h3>Conferência de Fatura</h3>
+                        <button class="btn-action" onclick="App.closeFatura()">Fechar</button>
+                    </div>
+                    <div class="fatura-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Valor da Fatura</label>
+                                <input type="number" step="0.01" id="faturaValor" placeholder="Ex: 14780.22" class="fatura-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Banco / Cartão</label>
+                                <select id="faturaBanco" class="filter-select"></select>
+                            </div>
+                            <div class="form-group" style="display:flex;align-items:flex-end">
+                                <button class="btn-primary" onclick="App.conferirFatura()">Conferir e Pagar</button>
+                            </div>
+                        </div>
+                        <div id="faturaResult"></div>
+                    </div>
+                </div>
+
+                <!-- Ações em massa -->
+                <div class="bulk-actions" id="bulkActions">
+                    <div class="bulk-left">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="selectAllExpenses"> Selecionar todos
+                        </label>
+                        <span class="bulk-count" id="bulkCount">0 selecionados</span>
+                    </div>
+                    <div class="bulk-right">
+                        <button class="btn-action edit" onclick="App.bulkPaySelected()">Marcar como Pago</button>
+                        <button class="btn-action" onclick="App.bulkUnpaySelected()">Desmarcar Pago</button>
+                        <button class="btn-primary btn-sm" onclick="App.openFatura()">Conferir Fatura</button>
+                    </div>
                 </div>
 
                 <div class="table-container">

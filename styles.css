@@ -379,6 +379,59 @@ th.actions-header {
 .summary-card.balance .card-value.positive { color: var(--balance-pos); }
 .summary-card.balance .card-value.negative { color: var(--balance-neg); }
 
+/* ---- BULK ACTIONS ---- */
+.bulk-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.bulk-left { display: flex; align-items: center; gap: 12px; }
+.bulk-right { display: flex; align-items: center; gap: 8px; }
+.bulk-count {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* ---- FATURA CARD ---- */
+.fatura-card {
+    border-color: var(--accent);
+}
+.fatura-input {
+    padding: 9px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 600;
+    width: 100%;
+}
+.fatura-result-ok {
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    margin-top: 12px;
+    font-size: 0.85rem;
+}
+.fatura-match { background: rgba(0,184,148,0.1); color: var(--income); border: 1px solid rgba(0,184,148,0.3); }
+.fatura-diff { background: rgba(225,112,85,0.1); color: var(--expense); border: 1px solid rgba(225,112,85,0.3); }
+
+/* Checkbox in table */
+.exp-checkbox {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
 /* ---- CARDS ---- */
 .card {
     background: var(--bg-card);
@@ -611,6 +664,8 @@ th.actions-header {
     white-space: nowrap;
 }
 .data-table tr:hover td { background: var(--bg-hover); }
+.data-table tr.row-paid td { opacity: 0.6; }
+.data-table tr.row-paid:hover td { opacity: 1; }
 
 .table-total {
     text-align: right;
