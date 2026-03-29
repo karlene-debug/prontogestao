@@ -309,21 +309,34 @@ body {
 
 /* ---- ACTION BUTTONS (table rows) ---- */
 .actions-cell {
-    display: flex;
-    gap: 6px;
     white-space: nowrap;
+    position: sticky;
+    right: 0;
+    background: var(--bg-card);
+    z-index: 2;
+    box-shadow: -4px 0 8px rgba(0,0,0,0.15);
+}
+.data-table tr:hover .actions-cell { background: var(--bg-hover); }
+th.actions-header {
+    position: sticky;
+    right: 0;
+    background: var(--bg-secondary);
+    z-index: 3;
+    box-shadow: -4px 0 8px rgba(0,0,0,0.15);
 }
 .btn-action {
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 500;
+    font-size: 0.75rem;
+    font-weight: 600;
     border: 1px solid var(--border);
     background: var(--bg-primary);
     color: var(--text-secondary);
     cursor: pointer;
     font-family: var(--font);
     transition: all 0.2s;
+    margin-right: 4px;
+    display: inline-block;
 }
 .btn-action:hover { border-color: var(--accent); color: var(--accent); }
 .btn-action.edit:hover { border-color: var(--accent); color: var(--accent); }

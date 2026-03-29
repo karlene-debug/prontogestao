@@ -388,7 +388,7 @@
             ${sortHeader('incomes', 'recurrenceType', 'Tipo')}
             <th>Membro</th>
             <th>Recebimento</th>
-            <th>Ações</th>
+            <th class="actions-header">Ações</th>
         </tr>`;
 
         $('incomeTable').innerHTML = incomes.map(i => {
@@ -479,7 +479,7 @@
             ${sortHeader('expenses', 'category', 'Plano de Contas')}
             <th>Membro</th>
             ${sortHeader('expenses', 'status', 'Status')}
-            <th>Ações</th>
+            <th class="actions-header">Ações</th>
         </tr>`;
 
         $('expenseTable').innerHTML = expenses.map(e => {
