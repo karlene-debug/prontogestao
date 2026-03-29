@@ -246,10 +246,18 @@
                 </div>
 
                 <!-- Cards resumo -->
-                <div class="summary-cards summary-cards-sm">
+                <div class="summary-cards summary-cards-sm" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))">
                     <div class="summary-card expense">
-                        <span class="card-label">Total Gasto</span>
+                        <span class="card-label">Total</span>
                         <span class="card-value" id="expTotalCard">R$ 0</span>
+                    </div>
+                    <div class="summary-card" style="border-left:3px solid var(--income)">
+                        <span class="card-label">Pago</span>
+                        <span class="card-value" id="expPaidCard" style="color:var(--income)">R$ 0</span>
+                    </div>
+                    <div class="summary-card" style="border-left:3px solid var(--warning)">
+                        <span class="card-label">Pendente</span>
+                        <span class="card-value" id="expPendingCard" style="color:var(--warning)">R$ 0</span>
                     </div>
                     <div class="summary-card" style="border-left:3px solid var(--need)">
                         <span class="card-label">Fixo</span>

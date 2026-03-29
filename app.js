@@ -493,7 +493,11 @@
                 <td>${e.description || '-'}</td>
                 <td>${e.category || '-'}</td>
                 <td>${member ? member.name : '-'}</td>
-                <td><span class="status-badge ${e.status === 'Pg' ? 'paid' : 'pending'}">${e.status === 'Pg' ? 'Pago' : 'Pendente'}</span></td>
+                <td>
+                    <button class="btn-status ${e.status === 'Pg' ? 'confirmed' : ''}" onclick="App.toggleExpenseStatus('${e.id}')" title="${e.status === 'Pg' ? 'Pago - clique para desfazer' : 'Clique para confirmar pagamento'}">
+                        ${e.status === 'Pg' ? '&#10003; Pago' : '&#9711; Confirmar'}
+                    </button>
+                </td>
                 <td class="actions-cell">
                     <button class="btn-action edit" onclick="App.editExpense('${e.id}')">Editar</button>
                     <button class="btn-action danger" onclick="App.deleteExpense('${e.id}')">Excluir</button>
@@ -502,7 +506,11 @@
         }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma saída neste mês</td></tr>';
 
         // Summary cards
+        const paid = expenses.filter(e => e.status === 'Pg').reduce((s, e) => s + Number(e.value), 0);
+        const pendingExp = total - paid;
         $('expTotalCard').textContent = currency(total);
+        $('expPaidCard').textContent = currency(paid);
+        $('expPendingCard').textContent = currency(pendingExp);
         $('expFixoCard').textContent = currency(fixo);
         $('expVarCard').textContent = currency(variavel);
     }
@@ -1314,6 +1322,14 @@
             if (!item) return;
             item.status = item.status === 'Pg' ? '' : 'Pg';
             save(KEYS.incomes, items);
+            renderCurrentPage();
+        },
+        toggleExpenseStatus(id) {
+            const items = getExpenses();
+            const item = items.find(e => e.id === id);
+            if (!item) return;
+            item.status = item.status === 'Pg' ? '' : 'Pg';
+            save(KEYS.expenses, items);
             renderCurrentPage();
         },
         deleteIncome(id) {
