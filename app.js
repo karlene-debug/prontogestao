@@ -24,6 +24,7 @@
         editingType: null,
         sort: {}, // { tableName: { field: 'date', dir: 'asc' } }
         selectedExpenses: new Set(),
+        selectedIncomes: new Set(),
     };
 
     // --- Helpers ---
@@ -368,10 +369,13 @@
         const catF = $('filterIncCat').value;
         const bankF = $('filterIncBank').value;
         const typeF = $('filterIncType').value;
+        const statusIF = $('filterIncStatus').value;
         const searchTerm = ($('searchIncome').value || '').toLowerCase().trim();
         if (catF !== 'all') incomes = incomes.filter(i => i.category === catF);
         if (bankF !== 'all') incomes = incomes.filter(i => i.bank === bankF);
         if (typeF !== 'all') incomes = incomes.filter(i => (i.recurrenceType || 'avulsa') === typeF);
+        if (statusIF === 'pending') incomes = incomes.filter(i => i.status !== 'Pg');
+        if (statusIF === 'paid') incomes = incomes.filter(i => i.status === 'Pg');
         if (searchTerm) incomes = incomes.filter(i =>
             (i.source || '').toLowerCase().includes(searchTerm) ||
             (i.category || '').toLowerCase().includes(searchTerm) ||
@@ -387,6 +391,7 @@
 
         // Sortable headers
         $('incomeHead').innerHTML = `<tr>
+            <th style="width:30px"><input type="checkbox" class="exp-checkbox" id="selectAllIncHead" onchange="App.toggleSelectAllInc(this.checked)"></th>
             ${sortHeader('incomes', 'date', 'Data')}
             ${sortHeader('incomes', 'bank', 'Banco')}
             ${sortHeader('incomes', 'value', 'Valor')}
@@ -401,7 +406,9 @@
             const typeLabel = i.recurrenceType === 'recorrente' ? '<span class="rec-badge recorrente">Recorrente</span>'
                 : i.recurrenceType === 'parcelada' ? `<span class="rec-badge parcelada">${i.installmentLabel || 'Parcelada'}</span>`
                 : '<span class="rec-badge avulsa">Avulsa</span>';
-            return `<tr>
+            const checked = state.selectedIncomes && state.selectedIncomes.has(i.id) ? 'checked' : '';
+            return `<tr class="${i.status === 'Pg' ? 'row-paid' : ''}">
+                <td><input type="checkbox" class="exp-checkbox inc-row-check" data-id="${i.id}" ${checked} onchange="App.updateBulkCountInc()"></td>
                 <td>${dateStr(i.date)}</td>
                 <td>${i.bank || '-'}</td>
                 <td style="font-weight:600;color:var(--income)">${currency(i.value)}</td>
@@ -416,7 +423,7 @@
                     <button class="btn-action danger" onclick="App.deleteIncome('${i.id}')">Excluir</button>
                 </td>
             </tr>`;
-        }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
+        }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
 
         // Summary cards
         $('incTotalCard').textContent = currency(total);
@@ -1304,7 +1311,11 @@
     $('filterIncCat').addEventListener('change', renderEntradas);
     $('filterIncBank').addEventListener('change', renderEntradas);
     $('filterIncType').addEventListener('change', renderEntradas);
+    $('filterIncStatus').addEventListener('change', renderEntradas);
     $('searchIncome').addEventListener('input', renderEntradas);
+    $('selectAllIncomes').addEventListener('change', (e) => {
+        App.toggleSelectAllInc(e.target.checked);
+    });
 
     // --- Button listeners ---
     $('btnAddIncome').addEventListener('click', () => openIncomeModal(null));
@@ -1476,6 +1487,49 @@
             save(KEYS.expenses, items);
             state.selectedExpenses = new Set();
             renderSaidas();
+        },
+        // --- Bulk actions for Incomes ---
+        toggleSelectAllInc(checked) {
+            const checkboxes = document.querySelectorAll('.inc-row-check');
+            state.selectedIncomes = new Set();
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                if (checked) state.selectedIncomes.add(cb.dataset.id);
+            });
+            const headCb = $('selectAllIncHead');
+            if (headCb) headCb.checked = checked;
+            const sideCb = $('selectAllIncomes');
+            if (sideCb) sideCb.checked = checked;
+            this.updateBulkCountInc();
+        },
+        updateBulkCountInc() {
+            const checkboxes = document.querySelectorAll('.inc-row-check');
+            state.selectedIncomes = new Set();
+            checkboxes.forEach(cb => { if (cb.checked) state.selectedIncomes.add(cb.dataset.id); });
+            const count = state.selectedIncomes.size;
+            if (count === 0) {
+                $('bulkCountInc').textContent = '0 selecionados';
+            } else {
+                const items = getIncomes();
+                const subtotal = items.filter(i => state.selectedIncomes.has(i.id)).reduce((s, i) => s + Number(i.value), 0);
+                $('bulkCountInc').innerHTML = `${count} selecionados &mdash; <strong style="color:var(--income)">${currency(subtotal)}</strong>`;
+            }
+        },
+        bulkReceiveSelected() {
+            if (state.selectedIncomes.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            const items = getIncomes();
+            items.forEach(i => { if (state.selectedIncomes.has(i.id)) i.status = 'Pg'; });
+            save(KEYS.incomes, items);
+            state.selectedIncomes = new Set();
+            renderEntradas();
+        },
+        bulkUnreceiveSelected() {
+            if (state.selectedIncomes.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            const items = getIncomes();
+            items.forEach(i => { if (state.selectedIncomes.has(i.id)) i.status = ''; });
+            save(KEYS.incomes, items);
+            state.selectedIncomes = new Set();
+            renderEntradas();
         },
         openFatura() {
             $('faturaCard').style.display = '';
