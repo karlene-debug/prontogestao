@@ -108,7 +108,7 @@ const CONDITIONS = ['Necessidade', 'Desejo', 'Financeiro', 'Dívidas'];
 const CONDITION_TARGETS = { 'Necessidade': 50, 'Desejo': 30, 'Financeiro': 20, 'Dívidas': 0 };
 
 const INCOME_CATEGORIES = [
-    'Renda Principal', 'Pensão Alimentícia', 'Freelance', 'Investimentos',
+    'Salário', 'Renda Principal', 'Pensão Alimentícia', 'Freelance', 'Investimentos',
     'Aluguel Recebido', 'Outros'
 ];
 

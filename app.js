@@ -788,7 +788,7 @@
             healthIcon.classList.add('good');
             healthIcon.textContent = '\uD83D\uDC4D';
             healthTitle.textContent = 'Bom caminho';
-            healthTitle.style.color = 'var(--need)';
+            healthTitle.style.color = 'var(--text-primary)';
             healthDesc.textContent = `Economia de ${taxaEconomia}%. Falta pouco para a meta de 20%.`;
         } else if (taxaEconomia >= 0) {
             healthIcon.classList.add('warning');
