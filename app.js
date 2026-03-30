@@ -653,6 +653,35 @@
 
         // Mobile cards view
         renderMobileCards('expense', expenses);
+
+        // Card: lançamentos com info pendente
+        const allExp = filterByMember(filterByMonth(getExpenses(), 'date'));
+        const incomplete = allExp.filter(e => !e.bank || !e.paymentType);
+        const pendingCard = $('pendingInfoCard');
+        if (pendingCard) {
+            if (incomplete.length > 0) {
+                pendingCard.style.display = '';
+                pendingCard.innerHTML = `<div style="padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--warning)">Informações pendentes</div>
+                        <div style="font-size:11px;color:var(--text-muted)">${incomplete.length} lançamento(s) sem banco ou tipo de pagamento</div>
+                    </div>
+                    <span style="font-size:12px;color:var(--text-muted)">&#9660;</span>
+                </div>
+                <div style="display:none;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;margin-top:-17px;margin-bottom:16px;overflow:hidden">
+                    ${incomplete.map(e => `<div class="mobile-item" style="padding:10px 16px">
+                        <div class="mobile-item-info">
+                            <span class="mobile-item-desc">${e.description || e.category || '-'}</span>
+                            <span class="mobile-item-meta">${dateStr(e.date)} · ${currency(e.value)}</span>
+                        </div>
+                        <button class="mobile-item-action" onclick="App.editExpense('${e.id}')">Completar</button>
+                    </div>`).join('')}
+                </div>`;
+            } else {
+                pendingCard.style.display = 'none';
+                pendingCard.innerHTML = '';
+            }
+        }
     }
 
     function populateSelect(el, options, placeholder) {
@@ -1230,20 +1259,13 @@
         ).join('');
 
         const body = `
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Data da Compra</label>
-                    <input type="date" id="fExpDate" value="${e.date || ''}">
-                </div>
-                <div class="form-group">
-                    <label>Data de Pagamento</label>
-                    <input type="date" id="fExpDueDate" value="${e.dueDate || ''}">
-                    <span style="font-size:10px;color:var(--text-muted)">Quando será pago (vencimento)</span>
-                </div>
+            <div class="form-group">
+                <label>Data da Compra *</label>
+                <input type="date" id="fExpDate" value="${e.date || ''}">
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Valor</label>
+                    <label>Valor *</label>
                     <input type="number" step="0.01" min="0" id="fExpValue" value="${e.value ? Number(e.value).toFixed(2) : ''}" placeholder="0.00" required>
                 </div>
                 <div class="form-group">
@@ -1251,38 +1273,42 @@
                     <input type="text" id="fExpDesc" value="${e.description || ''}" placeholder="Nome do estabelecimento">
                 </div>
             </div>
-            <div class="form-row">
-                <div class="form-group" style="position:relative">
-                    <label>Plano de Contas *</label>
-                    <input type="text" id="fExpCat" value="${e.category || ''}" placeholder="Digite para buscar..." autocomplete="off"
-                        onfocus="this.nextElementSibling.style.display=''"
-                        oninput="App.filterCatDropdown(this.value, 'fExpCatDrop')">
-                    <div class="cat-dropdown" id="fExpCatDrop" style="display:none"></div>
-                </div>
-                <div class="form-group">
-                    <label>Banco / Cartão</label>
-                    <select id="fExpBank">
-                        <option value="">Selecione</option>
-                        ${BANKS.map(b => `<option value="${b}" ${e.bank === b ? 'selected' : ''}>${b}</option>`).join('')}
-                    </select>
-                </div>
+            <div class="form-group" style="position:relative">
+                <label>Plano de Contas *</label>
+                <input type="text" id="fExpCat" value="${e.category || ''}" placeholder="Digite para buscar..." autocomplete="off"
+                    onfocus="this.nextElementSibling.style.display=''"
+                    oninput="App.filterCatDropdown(this.value, 'fExpCatDrop')">
+                <div class="cat-dropdown" id="fExpCatDrop" style="display:none"></div>
             </div>
             <div class="form-row">
                 <div class="form-group">
+                    <label>Banco / Cartão</label>
+                    <select id="fExpBank">
+                        <option value="">Não definido</option>
+                        ${BANKS.map(b => `<option value="${b}" ${e.bank === b ? 'selected' : ''}>${b}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Tipo Pagamento</label>
                     <select id="fExpPayment">
+                        <option value="">Não definido</option>
                         ${PAYMENT_TYPES.map(p => `<option value="${p}" ${e.paymentType === p ? 'selected' : ''}>${p}</option>`).join('')}
                     </select>
                 </div>
+            </div>
+            <div class="form-group">
+                <label>Data de Pagamento</label>
+                <input type="date" id="fExpDueDate" value="${e.dueDate || ''}">
+                <span style="font-size:10px;color:var(--text-muted)" id="fExpDueDateHint">Preenchido automaticamente para crédito, débito e pix</span>
+            </div>
+            <div id="fExpCardInfo" style="margin-top:4px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted);display:none"></div>
+            <div class="form-row">
                 <div class="form-group">
                     <label>Membro</label>
                     <select id="fExpMember">
                         ${members.map(m => `<option value="${m.id}" ${e.memberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
                     </select>
                 </div>
-            </div>
-            <div id="fExpCardInfo" style="margin-top:8px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted);display:none"></div>
-            <div class="form-row">
                 <div class="form-group">
                     <label>Tipo</label>
                     <select id="fExpRecType" ${isGeneratedInstallment ? 'disabled' : ''}>
@@ -1291,10 +1317,10 @@
                         <option value="parcelada" ${e.recurrenceType === 'parcelada' || e.installments ? 'selected' : ''}>Parcelada (X vezes)</option>
                     </select>
                 </div>
-                <div class="form-group" id="installmentCountGroup" style="${(e.installments || e.recurrenceType === 'parcelada') ? '' : 'display:none'}">
-                    <label>Quantidade de Parcelas</label>
-                    <input type="number" min="2" max="72" id="fExpInstallCount" value="${e.installments ? e.installments.split('/')[1] || '' : ''}" placeholder="Ex: 10" ${isGeneratedInstallment ? 'disabled' : ''}>
-                </div>
+            </div>
+            <div class="form-group" id="installmentCountGroup" style="${(e.installments || e.recurrenceType === 'parcelada') ? '' : 'display:none'}">
+                <label>Quantidade de Parcelas</label>
+                <input type="number" min="2" max="72" id="fExpInstallCount" value="${e.installments ? e.installments.split('/')[1] || '' : ''}" placeholder="Ex: 10" ${isGeneratedInstallment ? 'disabled' : ''}>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -1318,10 +1344,16 @@
             const recType = $('fExpRecType').value;
             const installCount = parseInt($('fExpInstallCount').value) || 0;
             const val = parseValue($('fExpValue').value);
+            const statusVal = $('fExpStatus').value;
             if (!val || val <= 0) { toast('Informe o valor.', 'error'); return false; }
             if (!$('fExpDate').value) { toast('Informe a data da compra.', 'error'); return false; }
             if (!$('fExpCat').value.trim()) { toast('Informe o plano de contas.', 'error'); return false; }
             if (recType === 'parcelada' && installCount < 2) { toast('Informe a quantidade de parcelas (mínimo 2).', 'error'); return false; }
+            // Se marcou como pago, exige banco e tipo pagamento
+            if (statusVal === 'Pg') {
+                if (!$('fExpBank').value) { toast('Informe o banco para confirmar pagamento.', 'error'); return false; }
+                if (!$('fExpPayment').value) { toast('Informe o tipo de pagamento para confirmar.', 'error'); return false; }
+            }
 
             const data = {
                 id: e.id || uid(),
@@ -1390,28 +1422,41 @@
                 $('installmentCountGroup').style.display = sel.value === 'parcelada' ? '' : 'none';
             });
 
-            // Show card billing info
+            // Show card billing info + auto-fill due date
             function updateCardInfo() {
                 const bankEl = $('fExpBank');
                 const payEl = $('fExpPayment');
                 const dateEl = $('fExpDate');
                 const dueDateEl = $('fExpDueDate');
                 const infoEl = $('fExpCardInfo');
+                const hintEl = $('fExpDueDateHint');
                 if (!bankEl || !payEl || !infoEl) return;
                 const bank = bankEl.value;
                 const pay = payEl.value;
+                const purchaseDate = dateEl.value;
+
+                // Débito ou Pix → data de pagamento = data da compra
+                if ((pay === 'Débito' || pay === 'Pix') && purchaseDate) {
+                    if (dueDateEl && !dueDateEl._userEdited) {
+                        dueDateEl.value = purchaseDate;
+                    }
+                    infoEl.style.display = '';
+                    infoEl.innerHTML = `<span style="color:var(--income)">✓</span> ${pay} — pagamento na data da compra`;
+                    return;
+                }
+
+                // Crédito + banco cadastrado → data da fatura
                 if (pay === 'Crédito' && bank) {
                     const card = getCards().find(c => c.bank === bank);
                     if (card) {
-                        const purchaseDate = dateEl.value ? new Date(dateEl.value + 'T00:00:00') : new Date();
-                        const day = purchaseDate.getDate();
-                        let faturaMonth = purchaseDate.getMonth();
-                        let faturaYear = purchaseDate.getFullYear();
+                        const pDate = purchaseDate ? new Date(purchaseDate + 'T00:00:00') : new Date();
+                        const day = pDate.getDate();
+                        let faturaMonth = pDate.getMonth();
+                        let faturaYear = pDate.getFullYear();
                         if (day > card.closeDay) {
                             faturaMonth++;
                             if (faturaMonth > 11) { faturaMonth = 0; faturaYear++; }
                         }
-                        // Pagamento é no mês seguinte ao fechamento
                         let payMonth = faturaMonth + 1;
                         let payYear = faturaYear;
                         if (payMonth > 11) { payMonth = 0; payYear++; }
@@ -1419,27 +1464,42 @@
                         const payMM = String(payMonth + 1).padStart(2, '0');
                         const payDD = String(card.dueDay).padStart(2, '0');
                         const dueDateStr = `${payYear}-${payMM}-${payDD}`;
-                        // Auto-preencher data de pagamento
-                        if (dueDateEl && !dueDateEl.value) {
+                        if (dueDateEl && !dueDateEl._userEdited) {
                             dueDateEl.value = dueDateStr;
                         }
                         infoEl.style.display = '';
                         infoEl.innerHTML = `<strong>${bank}</strong> · Fatura ${faturaLabel} (fecha dia ${card.closeDay}) · Paga dia ${card.dueDay}
-                            <div style="margin-top:4px;font-size:11px;color:var(--text-muted)">Compra dia ${day} → ${day > card.closeDay ? 'próxima fatura' : 'esta fatura'}. Data de pagamento preenchida automaticamente — edite se necessário.</div>`;
+                            <div style="margin-top:4px;font-size:11px;color:var(--text-muted)">Compra dia ${day} → ${day > card.closeDay ? 'próxima fatura' : 'esta fatura'}</div>`;
                     } else {
                         infoEl.style.display = '';
-                        infoEl.innerHTML = `Cartão "${bank}" não cadastrado. <a href="#" onclick="App.navigate('configuracoes');return false" style="color:var(--text-primary);text-decoration:underline">Cadastrar nas Configurações</a>`;
+                        infoEl.innerHTML = `Cartão "${bank}" não cadastrado. <a href="#" onclick="App.navigate('configuracoes');return false" style="color:var(--text-primary);text-decoration:underline">Cadastrar</a>`;
                     }
-                } else {
+                    return;
+                }
+
+                // Transferência → mesma data
+                if (pay === 'Transferência' && purchaseDate) {
+                    if (dueDateEl && !dueDateEl._userEdited) {
+                        dueDateEl.value = purchaseDate;
+                    }
                     infoEl.style.display = 'none';
+                    return;
+                }
+
+                infoEl.style.display = 'none';
                 }
             }
             const bankEl = $('fExpBank');
             const payEl = $('fExpPayment');
             const dateEl = $('fExpDate');
+            const dueDateEl2 = $('fExpDueDate');
             if (bankEl) bankEl.addEventListener('change', updateCardInfo);
             if (payEl) payEl.addEventListener('change', updateCardInfo);
-            if (dateEl) dateEl.addEventListener('change', updateCardInfo);
+            if (dateEl) dateEl.addEventListener('change', () => {
+                if (dueDateEl2) dueDateEl2._userEdited = false; // reset on date change
+                updateCardInfo();
+            });
+            if (dueDateEl2) dueDateEl2.addEventListener('change', () => { dueDateEl2._userEdited = true; });
             updateCardInfo();
         }, 50);
     }
