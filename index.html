@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ProntoGestão - App de gestão financeira familiar. Controle receitas, despesas, orçamento e a regra 50/30/20.">
-    <meta name="theme-color" content="#6c5ce7">
+    <meta name="theme-color" content="#0A0A0A">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>ProntoGestão - Gestão Financeira Familiar</title>
@@ -19,7 +19,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h1 class="logo">Pronto<span>Gestão</span></h1>
+                <h1 class="logo">ProntoGestão</h1>
                 <button class="sidebar-toggle" id="sidebarToggle">☰</button>
             </div>
 
@@ -32,31 +32,31 @@
 
             <nav class="sidebar-nav">
                 <button class="nav-btn active" data-page="dashboard">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                     Dashboard
                 </button>
                 <button class="nav-btn" data-page="entradas">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M11 8c0-.55-.45-1-1-1s-1 .45-1 1 .45 1 1 1 1-.45 1-1zm2-2V4a2 2 0 00-2-2H5a2 2 0 00-2 2v16a2 2 0 002 2h6a2 2 0 002-2v-2h-1c-1.38 0-2.63-.56-3.54-1.46L5.29 13.37A4.983 4.983 0 014 10c0-2.76 2.24-5 5-5h4zm8.71 5.29l-4-4a1.003 1.003 0 00-1.42 1.42L18.59 11H10c-.55 0-1 .45-1 1s.45 1 1 1h8.59l-2.29 2.29a1.003 1.003 0 001.42 1.42l4-4c.38-.39.38-1.01-.01-1.42z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m-7-7l7 7 7-7"/></svg>
                     Entradas
                 </button>
                 <button class="nav-btn" data-page="saidas">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M11 8c0-.55-.45-1-1-1s-1 .45-1 1 .45 1 1 1 1-.45 1-1zm-2 13v-1H5a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v2H9c-2.76 0-5 2.24-5 5 0 1.38.56 2.63 1.46 3.54l3.17 3.17A4.95 4.95 0 009 20v1zm10.71-9.71l-4-4a1.003 1.003 0 00-1.42 1.42L16.59 11H8c-.55 0-1 .45-1 1s.45 1 1 1h8.59l-2.29 2.29a1.003 1.003 0 001.42 1.42l4-4c.38-.39.38-1.01-.01-1.42z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-7 7l7-7 7 7"/></svg>
                     Saídas
                 </button>
                 <button class="nav-btn" data-page="orcamento">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17V10m4 7V7m4 10v-4"/></svg>
                     Orçado x Real
                 </button>
                 <button class="nav-btn" data-page="fluxo">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                     Fluxo de Caixa
                 </button>
                 <button class="nav-btn" data-page="membros">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
                     Membros
                 </button>
                 <button class="nav-btn" data-page="planejamento">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
                     Planejamento
                 </button>
             </nav>
@@ -83,7 +83,7 @@
             <!-- Mobile Header -->
             <div class="mobile-bar" id="mobileBar">
                 <button class="mobile-menu-btn" id="mobileMenuBtn">&#9776;</button>
-                <span class="mobile-logo">Pronto<span>Gestão</span></span>
+                <span class="mobile-logo">ProntoGestão</span>
                 <div class="mobile-month">
                     <button id="prevMonthMobile" class="month-nav-sm">&lt;</button>
                     <span id="currentMonthMobile">Mar 2026</span>
