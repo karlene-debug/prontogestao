@@ -2419,20 +2419,27 @@
             swipeEl.style.transition = 'transform 0.2s ease';
 
             const parent = swipeEl.closest('.mobile-item-swipe');
+            const resetEl = swipeEl;
             if (diff > THRESHOLD && parent) {
                 // Swipe right = edit
-                swipeEl.style.transform = 'translateX(0)';
+                resetEl.style.transform = 'translateX(0)';
                 const fn = parent.dataset.edit;
                 const id = parent.dataset.id;
                 if (fn && id) setTimeout(() => App[fn](id), 100);
             } else if (diff < -THRESHOLD && parent) {
-                // Swipe left = delete
-                swipeEl.style.transform = 'translateX(-100%)';
+                // Swipe left = delete — show then reset
+                resetEl.style.transform = 'translateX(-80px)';
                 const fn = parent.dataset.delete;
                 const id = parent.dataset.id;
-                if (fn && id) setTimeout(() => App[fn](id), 300);
+                if (fn && id) {
+                    setTimeout(() => {
+                        App[fn](id);
+                        // Reset position after confirm/cancel
+                        setTimeout(() => { resetEl.style.transform = 'translateX(0)'; }, 100);
+                    }, 200);
+                }
             } else {
-                swipeEl.style.transform = 'translateX(0)';
+                resetEl.style.transform = 'translateX(0)';
             }
             swipeEl = null;
         });
