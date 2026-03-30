@@ -371,10 +371,10 @@ th.actions-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: 12px 16px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     margin-bottom: 12px;
     flex-wrap: wrap;
     gap: 10px;
@@ -382,38 +382,37 @@ th.actions-header {
 .bulk-left { display: flex; align-items: center; gap: 12px; }
 .bulk-right { display: flex; align-items: center; gap: 8px; }
 .bulk-count {
-    font-size: 0.78rem;
+    font-size: 13px;
     color: var(--text-muted);
-    font-weight: 500;
+    font-weight: 400;
 }
 
 /* ---- FATURA CARD ---- */
 .fatura-card {
-    border-color: var(--accent);
+    border-color: var(--border);
 }
 .fatura-input {
     padding: 9px 12px;
     background: var(--bg-primary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     color: var(--text-primary);
     font-family: var(--font);
-    font-size: 1rem;
+    font-size: 14px;
     font-weight: 600;
     width: 100%;
 }
 .fatura-result-ok {
     padding: 12px;
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     margin-top: 12px;
-    font-size: 0.85rem;
+    font-size: 13px;
 }
-.fatura-match { background: rgba(0,184,148,0.1); color: var(--income); border: 1px solid rgba(0,184,148,0.3); }
-.fatura-diff { background: rgba(225,112,85,0.1); color: var(--expense); border: 1px solid rgba(225,112,85,0.3); }
+.fatura-match { background: var(--income-bg); color: var(--income); border: 1px solid var(--border); }
+.fatura-diff { background: var(--expense-bg); color: var(--expense); border: 1px solid var(--border); }
 
 /* Checkbox in table */
 .exp-checkbox {
-    accent-color: var(--accent);
     width: 16px;
     height: 16px;
     cursor: pointer;
@@ -625,43 +624,45 @@ th.actions-header {
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.82rem;
+    font-size: 14px;
 }
 .data-table th {
-    background: var(--bg-secondary);
-    padding: 10px 12px;
+    background: transparent;
+    padding: 12px 14px;
     text-align: left;
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.08em;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
 .data-table th.sortable {
     cursor: pointer;
     user-select: none;
-    transition: color 0.2s;
+    transition: color 0.15s;
 }
-.data-table th.sortable:hover { color: var(--accent); }
+.data-table th.sortable:hover { color: var(--text-primary); }
 .data-table td {
-    padding: 10px 12px;
+    padding: 0 14px;
+    height: 48px;
     border-bottom: 1px solid var(--border);
     color: var(--text-primary);
     white-space: nowrap;
+    font-weight: 400;
 }
 .data-table tr:hover td { background: var(--bg-hover); }
-.data-table tr.row-paid td { opacity: 0.6; }
-.data-table tr.row-paid:hover td { opacity: 1; }
+.data-table tr.row-paid td { opacity: 0.5; }
+.data-table tr.row-paid:hover td { opacity: 0.8; }
 
 .table-total {
     text-align: right;
-    padding: 14px 12px;
-    font-size: 0.9rem;
+    padding: 14px;
+    font-size: 14px;
     color: var(--text-secondary);
 }
-.table-total strong { color: var(--text-primary); font-size: 1rem; }
+.table-total strong { color: var(--text-primary); font-size: 15px; font-weight: 600; }
 
 /* ---- FLUXO DE CAIXA ---- */
 .health-card {
@@ -918,10 +919,10 @@ th.actions-header {
 
 /* ---- BUDGET TABLE ---- */
 .budget-table .group-row td {
-    background: var(--bg-secondary);
-    font-weight: 700;
-    color: var(--accent);
-    font-size: 0.85rem;
+    background: var(--bg-hover);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
 }
 
 /* ---- PAGE MONTH NAV ---- */
@@ -931,29 +932,30 @@ th.actions-header {
     justify-content: center;
     gap: 16px;
     margin-bottom: 20px;
-    padding: 12px 0;
+    padding: 8px 0;
 }
 .month-nav-lg {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    width: 40px;
-    height: 40px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: color 0.15s;
+    border-radius: 6px;
 }
-.month-nav-lg:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.month-nav-lg:hover { color: var(--text-primary); background: var(--bg-hover); }
 .month-nav-label {
-    font-size: 1.2rem;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
     min-width: 180px;
     text-align: center;
+    letter-spacing: -0.3px;
 }
 
 /* ---- SUMMARY CARDS SMALL ---- */
@@ -961,10 +963,11 @@ th.actions-header {
     margin-bottom: 16px;
 }
 .summary-cards-sm .summary-card {
-    padding: 14px 18px;
+    padding: 16px 20px;
 }
 .summary-cards-sm .card-value {
-    font-size: 1.3rem;
+    font-size: 22px;
+    letter-spacing: -0.5px;
 }
 
 /* ---- TABLE FILTERS ---- */
@@ -978,26 +981,26 @@ th.actions-header {
 /* ---- SEARCH INPUT ---- */
 .search-input {
     padding: 8px 14px;
-    background: var(--bg-card);
+    background: transparent;
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     color: var(--text-primary);
-    font-size: 0.82rem;
+    font-size: 13px;
     font-family: var(--font);
     min-width: 180px;
 }
 .search-input::placeholder { color: var(--text-muted); }
-.search-input:focus { outline: none; border-color: var(--accent); }
+.search-input:focus { outline: none; border-color: var(--text-muted); }
 
 /* ---- FILTER SELECTS ---- */
 .filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .filter-select {
     padding: 8px 12px;
-    background: var(--bg-card);
+    background: transparent;
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     color: var(--text-primary);
-    font-size: 0.82rem;
+    font-size: 13px;
     font-family: var(--font);
     cursor: pointer;
 }
