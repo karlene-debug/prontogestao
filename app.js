@@ -514,13 +514,20 @@
                                 </div>
                                 <div class="mobile-item-bottom">
                                     <span class="mobile-item-meta">${dateStr(item.date)}</span>
+                                    ${item.dueDate ? `<span class="mobile-item-meta">Paga ${dateStr(item.dueDate)}</span>` : ''}
                                     <span class="mobile-item-meta">${item.category || ''}</span>
                                     <span class="mobile-item-meta">${item.bank || ''}</span>
                                 </div>
                             </div>
-                            <button class="mobile-item-action${isPaid ? ' confirmed' : ''}" onclick="App.${toggleFn}('${item.id}')">
-                                ${isPaid ? '✓ ' + doneLabel : actionLabel}
-                            </button>
+                            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+                                <button class="mobile-item-action${isPaid ? ' confirmed' : ''}" onclick="App.${toggleFn}('${item.id}')">
+                                    ${isPaid ? '✓ ' + doneLabel : actionLabel}
+                                </button>
+                                <div style="display:flex;gap:8px;justify-content:center">
+                                    <button style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:var(--font)" onclick="App.${isIncome ? 'editIncome' : 'editExpense'}('${item.id}')">Editar</button>
+                                    <button style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:var(--font)" onclick="App.${isIncome ? 'deleteIncome' : 'deleteExpense'}('${item.id}')">Apagar</button>
+                                </div>
+                            </div>
                         </div>`;
                     }).join('')}
                 </div>
@@ -1046,7 +1053,7 @@
             </div>
             <div class="form-row" id="dateRow">
                 <div class="form-group">
-                    <label>Data${isGenerated ? ' (gerada)' : ''}</label>
+                    <label>Data da Entrada${isGenerated ? ' (gerada)' : ''}</label>
                     <input type="date" id="fIncDate" value="${i.date || ''}" ${isGenerated ? 'readonly style="opacity:0.6"' : ''}>
                 </div>
                 <div class="form-group">
@@ -1227,11 +1234,27 @@
                     <input type="date" id="fExpDate" value="${e.date || ''}">
                 </div>
                 <div class="form-group">
-                    <label>Valor da Parcela</label>
-                    <input type="number" step="0.01" min="0" id="fExpValue" value="${e.value ? Number(e.value).toFixed(2) : ''}" placeholder="0.00">
+                    <label>Data de Pagamento</label>
+                    <input type="date" id="fExpDueDate" value="${e.dueDate || ''}">
+                    <span style="font-size:10px;color:var(--text-muted)">Quando será pago (vencimento)</span>
                 </div>
             </div>
             <div class="form-row">
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" step="0.01" min="0" id="fExpValue" value="${e.value ? Number(e.value).toFixed(2) : ''}" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Estabelecimento</label>
+                    <input type="text" id="fExpDesc" value="${e.description || ''}" placeholder="Nome do estabelecimento">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Plano de Contas *</label>
+                    <input type="text" id="fExpCat" list="expCatList" value="${e.category || ''}" placeholder="Digite ou selecione..." autocomplete="off" required>
+                    <datalist id="expCatList">${catOptions}</datalist>
+                </div>
                 <div class="form-group">
                     <label>Banco / Cartão</label>
                     <select id="fExpBank">
@@ -1239,24 +1262,22 @@
                         ${BANKS.map(b => `<option value="${b}" ${e.bank === b ? 'selected' : ''}>${b}</option>`).join('')}
                     </select>
                 </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label>Tipo Pagamento</label>
                     <select id="fExpPayment">
                         ${PAYMENT_TYPES.map(p => `<option value="${p}" ${e.paymentType === p ? 'selected' : ''}>${p}</option>`).join('')}
                     </select>
                 </div>
-            </div>
-            <div class="form-row">
                 <div class="form-group">
-                    <label>Estabelecimento</label>
-                    <input type="text" id="fExpDesc" value="${e.description || ''}" placeholder="Nome do estabelecimento">
-                </div>
-                <div class="form-group">
-                    <label>Plano de Contas</label>
-                    <input type="text" id="fExpCat" list="expCatList" value="${e.category || ''}" placeholder="Digite ou selecione..." autocomplete="off">
-                    <datalist id="expCatList">${catOptions}</datalist>
+                    <label>Membro</label>
+                    <select id="fExpMember">
+                        ${members.map(m => `<option value="${m.id}" ${e.memberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                    </select>
                 </div>
             </div>
+            <div id="fExpCardInfo" style="margin-top:8px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted);display:none"></div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Tipo</label>
@@ -1273,20 +1294,14 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Membro</label>
-                    <select id="fExpMember">
-                        ${members.map(m => `<option value="${m.id}" ${e.memberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
                     <label>Status</label>
                     <select id="fExpStatus">
                         <option value="" ${!e.status ? 'selected' : ''}>Pendente</option>
                         <option value="Pg" ${e.status === 'Pg' ? 'selected' : ''}>Pago</option>
                     </select>
                 </div>
+                <div class="form-group"></div>
             </div>
-            <div id="fExpCardInfo" style="margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted);display:none"></div>
             ${isGeneratedInstallment ? `<div style="margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted)">
                 ${e.recurrenceType === 'recorrente' ? 'Este lançamento faz parte de uma recorrência.' : `Parcela ${e.installments} - gerada automaticamente.`}
                 <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;color:var(--text-primary);font-size:13px">
@@ -1300,16 +1315,18 @@
             const installCount = parseInt($('fExpInstallCount').value) || 0;
             const val = parseValue($('fExpValue').value);
             if (!val || val <= 0) { toast('Informe o valor.', 'error'); return false; }
-            if (!$('fExpDate').value) { toast('Informe a data.', 'error'); return false; }
+            if (!$('fExpDate').value) { toast('Informe a data da compra.', 'error'); return false; }
+            if (!$('fExpCat').value.trim()) { toast('Informe o plano de contas.', 'error'); return false; }
             if (recType === 'parcelada' && installCount < 2) { toast('Informe a quantidade de parcelas (mínimo 2).', 'error'); return false; }
 
             const data = {
                 id: e.id || uid(),
                 date: $('fExpDate').value,
+                dueDate: $('fExpDueDate').value || '',
                 value: val,
                 bank: $('fExpBank').value,
                 paymentType: $('fExpPayment').value,
-                category: $('fExpCat').value,
+                category: $('fExpCat').value.trim(),
                 installments: recType === 'parcelada' && installCount > 1 ? `1/${installCount}` : '',
                 description: $('fExpDesc').value,
                 memberId: $('fExpMember').value,
@@ -1364,6 +1381,7 @@
                 const bankEl = $('fExpBank');
                 const payEl = $('fExpPayment');
                 const dateEl = $('fExpDate');
+                const dueDateEl = $('fExpDueDate');
                 const infoEl = $('fExpCardInfo');
                 if (!bankEl || !payEl || !infoEl) return;
                 const bank = bankEl.value;
@@ -1375,18 +1393,25 @@
                         const day = purchaseDate.getDate();
                         let faturaMonth = purchaseDate.getMonth();
                         let faturaYear = purchaseDate.getFullYear();
-                        // Se compra depois do fechamento, cai na fatura do mês seguinte
                         if (day > card.closeDay) {
                             faturaMonth++;
                             if (faturaMonth > 11) { faturaMonth = 0; faturaYear++; }
                         }
+                        // Pagamento é no mês seguinte ao fechamento
+                        let payMonth = faturaMonth + 1;
+                        let payYear = faturaYear;
+                        if (payMonth > 11) { payMonth = 0; payYear++; }
                         const faturaLabel = MONTH_NAMES[faturaMonth] + '/' + faturaYear;
-                        const dueDate = String(card.dueDay).padStart(2, '0') + '/' + String(faturaMonth + 1).padStart(2, '0') + '/' + faturaYear;
+                        const payMM = String(payMonth + 1).padStart(2, '0');
+                        const payDD = String(card.dueDay).padStart(2, '0');
+                        const dueDateStr = `${payYear}-${payMM}-${payDD}`;
+                        // Auto-preencher data de pagamento
+                        if (dueDateEl && !dueDateEl.value) {
+                            dueDateEl.value = dueDateStr;
+                        }
                         infoEl.style.display = '';
-                        infoEl.innerHTML = `<strong>${bank}</strong><br>
-                            Fatura: <strong>${faturaLabel}</strong> (abre dia ${card.openDay || '?'}, fecha dia ${card.closeDay})<br>
-                            Pagamento: <strong>${dueDate}</strong>
-                            <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">A compra do dia ${day} ${day > card.closeDay ? 'caiu na próxima fatura' : 'entra nesta fatura'}. Se não estiver certo, altere a data da compra.</div>`;
+                        infoEl.innerHTML = `<strong>${bank}</strong> · Fatura ${faturaLabel} (fecha dia ${card.closeDay}) · Paga dia ${card.dueDay}
+                            <div style="margin-top:4px;font-size:11px;color:var(--text-muted)">Compra dia ${day} → ${day > card.closeDay ? 'próxima fatura' : 'esta fatura'}. Data de pagamento preenchida automaticamente — edite se necessário.</div>`;
                     } else {
                         infoEl.style.display = '';
                         infoEl.innerHTML = `Cartão "${bank}" não cadastrado. <a href="#" onclick="App.navigate('configuracoes');return false" style="color:var(--text-primary);text-decoration:underline">Cadastrar nas Configurações</a>`;
