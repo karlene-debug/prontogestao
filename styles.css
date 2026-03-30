@@ -1800,6 +1800,71 @@ th.actions-header {
     .table-container, .bulk-actions { display: none; }
 }
 
+/* ---- CATEGORY DROPDOWN ---- */
+.cat-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 50;
+}
+.cat-dropdown-item {
+    padding: 10px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.1s;
+}
+.cat-dropdown-item:hover, .cat-dropdown-item:active {
+    background: var(--bg-hover);
+}
+.cat-dropdown-group {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ---- SWIPE ITEMS ---- */
+.mobile-item-swipe {
+    position: relative;
+    overflow: hidden;
+}
+.swipe-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+}
+.swipe-bg-left {
+    left: 0;
+    right: 0;
+    background: #3B82F6;
+    justify-content: flex-start;
+}
+.swipe-bg-right {
+    left: 0;
+    right: 0;
+    background: var(--expense);
+    justify-content: flex-end;
+}
+.mobile-item-content {
+    position: relative;
+    background: var(--bg-card);
+    transition: transform 0.2s ease;
+    z-index: 1;
+}
+
 /* ---- SKELETON LOADING ---- */
 .skeleton {
     background: var(--bg-hover);

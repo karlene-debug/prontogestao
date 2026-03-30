@@ -506,26 +506,28 @@
                     ${groupItems.map(item => {
                         const desc = isIncome ? (item.source || item.category || '-') : (item.description || item.category || '-');
                         const isPaid = item.status === 'Pg';
-                        return `<div class="mobile-item">
-                            <div class="mobile-item-info">
-                                <div class="mobile-item-top">
-                                    <span class="mobile-item-desc">${desc}</span>
-                                    <span class="mobile-item-value" style="color:${valueColor}">${currency(item.value)}</span>
-                                </div>
-                                <div class="mobile-item-bottom">
-                                    <span class="mobile-item-meta">${dateStr(item.date)}</span>
-                                    ${item.dueDate ? `<span class="mobile-item-meta">Paga ${dateStr(item.dueDate)}</span>` : ''}
-                                    <span class="mobile-item-meta">${item.category || ''}</span>
-                                    <span class="mobile-item-meta">${item.bank || ''}</span>
-                                </div>
-                            </div>
-                            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-                                <button class="mobile-item-action${isPaid ? ' confirmed' : ''}" onclick="App.${toggleFn}('${item.id}')">
-                                    ${isPaid ? '✓ ' + doneLabel : actionLabel}
-                                </button>
-                                <div style="display:flex;gap:8px;justify-content:center">
-                                    <button style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:var(--font)" onclick="App.${isIncome ? 'editIncome' : 'editExpense'}('${item.id}')">Editar</button>
-                                    <button style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:var(--font)" onclick="App.${isIncome ? 'deleteIncome' : 'deleteExpense'}('${item.id}')">Apagar</button>
+                        const editFn = isIncome ? 'editIncome' : 'editExpense';
+                        const deleteFn = isIncome ? 'deleteIncome' : 'deleteExpense';
+                        return `<div class="mobile-item-swipe" data-id="${item.id}" data-edit="${editFn}" data-delete="${deleteFn}">
+                            <div class="swipe-bg swipe-bg-left">Editar</div>
+                            <div class="swipe-bg swipe-bg-right">Excluir</div>
+                            <div class="mobile-item-content">
+                                <div class="mobile-item">
+                                    <div class="mobile-item-info">
+                                        <div class="mobile-item-top">
+                                            <span class="mobile-item-desc">${desc}</span>
+                                            <span class="mobile-item-value" style="color:${valueColor}">${currency(item.value)}</span>
+                                        </div>
+                                        <div class="mobile-item-bottom">
+                                            <span class="mobile-item-meta">${dateStr(item.date)}</span>
+                                            ${item.dueDate ? `<span class="mobile-item-meta">Paga ${dateStr(item.dueDate)}</span>` : ''}
+                                            <span class="mobile-item-meta">${item.category || ''}</span>
+                                            <span class="mobile-item-meta">${item.bank || ''}</span>
+                                        </div>
+                                    </div>
+                                    <button class="mobile-item-action${isPaid ? ' confirmed' : ''}" onclick="App.${toggleFn}('${item.id}')">
+                                        ${isPaid ? '✓ ' + doneLabel : actionLabel}
+                                    </button>
                                 </div>
                             </div>
                         </div>`;
@@ -1250,10 +1252,12 @@
                 </div>
             </div>
             <div class="form-row">
-                <div class="form-group">
+                <div class="form-group" style="position:relative">
                     <label>Plano de Contas *</label>
-                    <input type="text" id="fExpCat" list="expCatList" value="${e.category || ''}" placeholder="Digite ou selecione..." autocomplete="off" required>
-                    <datalist id="expCatList">${catOptions}</datalist>
+                    <input type="text" id="fExpCat" value="${e.category || ''}" placeholder="Digite para buscar..." autocomplete="off"
+                        onfocus="this.nextElementSibling.style.display=''"
+                        oninput="App.filterCatDropdown(this.value, 'fExpCatDrop')">
+                    <div class="cat-dropdown" id="fExpCatDrop" style="display:none"></div>
                 </div>
                 <div class="form-group">
                     <label>Banco / Cartão</label>
@@ -1368,8 +1372,18 @@
             renderCurrentPage();
         });
 
-        // Toggle installment field
+        // Toggle installment field + populate dropdown
         setTimeout(() => {
+            // Populate category dropdown
+            App.filterCatDropdown('', 'fExpCatDrop');
+            // Close dropdown on blur
+            const catInput = $('fExpCat');
+            if (catInput) {
+                catInput.addEventListener('blur', () => {
+                    setTimeout(() => { const d = $('fExpCatDrop'); if (d) d.style.display = 'none'; }, 200);
+                });
+            }
+
             const sel = $('fExpRecType');
             if (!sel) return;
             sel.addEventListener('change', () => {
@@ -1567,6 +1581,29 @@
     // ============================================================
     window.App = {
         navigate(page) { navigate(page); },
+        filterCatDropdown(query, dropId) {
+            const drop = document.getElementById(dropId);
+            if (!drop) return;
+            const cats = getAllCategories();
+            const q = query.toLowerCase().trim();
+            const filtered = q ? cats.filter(c => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q)) : cats;
+            drop.innerHTML = filtered.slice(0, 15).map(c =>
+                `<div class="cat-dropdown-item" onmousedown="document.getElementById('fExpCat').value='${c.name}';document.getElementById('${dropId}').style.display='none'">
+                    ${c.name}<span class="cat-dropdown-group">${c.group}</span>
+                </div>`
+            ).join('') || '<div style="padding:10px 12px;font-size:12px;color:var(--text-muted)">Nenhum resultado</div>';
+            drop.style.display = filtered.length > 0 || q ? '' : 'none';
+        },
+        populateCatDropdown(dropId) {
+            const drop = document.getElementById(dropId);
+            if (!drop) return;
+            const cats = getAllCategories();
+            drop.innerHTML = cats.slice(0, 20).map(c =>
+                `<div class="cat-dropdown-item" onmousedown="document.getElementById('fExpCat').value='${c.name}';document.getElementById('${dropId}').style.display='none'">
+                    ${c.name}<span class="cat-dropdown-group">${c.group}</span>
+                </div>`
+            ).join('');
+        },
         editIncome(id) {
             const item = getIncomes().find(i => i.id === id);
             if (item) openIncomeModal(item);
@@ -2289,6 +2326,57 @@
     setTimeout(() => {
         Object.assign(window.App, authMethods);
     }, 0);
+
+    // ============================================================
+    // SWIPE GESTURE FOR MOBILE CARDS
+    // ============================================================
+    (function initSwipe() {
+        let startX = 0, currentX = 0, swiping = false, swipeEl = null;
+        const THRESHOLD = 80;
+
+        document.addEventListener('touchstart', e => {
+            const el = e.target.closest('.mobile-item-swipe');
+            if (!el) return;
+            swipeEl = el.querySelector('.mobile-item-content');
+            startX = e.touches[0].clientX;
+            currentX = startX;
+            swiping = true;
+            swipeEl.style.transition = 'none';
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!swiping || !swipeEl) return;
+            currentX = e.touches[0].clientX;
+            const diff = currentX - startX;
+            const clamped = Math.max(-120, Math.min(120, diff));
+            swipeEl.style.transform = `translateX(${clamped}px)`;
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (!swiping || !swipeEl) return;
+            swiping = false;
+            const diff = currentX - startX;
+            swipeEl.style.transition = 'transform 0.2s ease';
+
+            const parent = swipeEl.closest('.mobile-item-swipe');
+            if (diff > THRESHOLD && parent) {
+                // Swipe right = edit
+                swipeEl.style.transform = 'translateX(0)';
+                const fn = parent.dataset.edit;
+                const id = parent.dataset.id;
+                if (fn && id) setTimeout(() => App[fn](id), 100);
+            } else if (diff < -THRESHOLD && parent) {
+                // Swipe left = delete
+                swipeEl.style.transform = 'translateX(-100%)';
+                const fn = parent.dataset.delete;
+                const id = parent.dataset.id;
+                if (fn && id) setTimeout(() => App[fn](id), 300);
+            } else {
+                swipeEl.style.transform = 'translateX(0)';
+            }
+            swipeEl = null;
+        });
+    })();
 
     // Check auth state
     checkOnboarding();
