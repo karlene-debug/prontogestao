@@ -6,8 +6,9 @@
 (function () {
     'use strict';
 
-    // Só executa se não tiver dados
+    // Só executa se não tiver dados e não tiver auth (evita conflito com onboarding)
     if (localStorage.getItem('pg_members')) return;
+    if (localStorage.getItem('pg_auth')) return;
 
     // --- MEMBROS ---
     const MEMBER_1 = 'mem_karlene';

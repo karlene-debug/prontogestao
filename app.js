@@ -1690,7 +1690,7 @@
 
     function logoutUser() {
         localStorage.removeItem(AUTH_KEY);
-        localStorage.removeItem('pg_onboarding_done');
+        // Não apagar pg_onboarding_done — ao relogar, não refaz o wizard
     }
 
     function getAuthUser() {
@@ -1699,14 +1699,14 @@
 
     function showAuthScreen() {
         $('authScreen').style.display = '';
-        $('app').style.display = 'none';
+        $('app').classList.add('app-hidden');
         const onb = document.getElementById('onboardingScreen');
         if (onb) onb.style.display = 'none';
     }
 
     function showApp() {
         $('authScreen').style.display = 'none';
-        $('app').style.display = '';
+        $('app').classList.remove('app-hidden');
         const onb = document.getElementById('onboardingScreen');
         if (onb) onb.style.display = 'none';
     }
@@ -1726,9 +1726,9 @@
         const name = $('regName').value.trim();
         const email = $('regEmail').value.trim();
         const pass = $('regPassword').value;
-        const confirm = $('regPasswordConfirm').value;
+        const confirmPass = $('regPasswordConfirm').value;
         if (!name || !email || !pass) { toast('Preencha todos os campos.', 'error'); return; }
-        if (pass !== confirm) { toast('As senhas não coincidem.', 'error'); return; }
+        if (pass !== confirmPass) { toast('As senhas não coincidem.', 'error'); return; }
         if (pass.length < 6) { toast('A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
         loginUser(name, email);
         toast('Conta criada!');
@@ -1753,7 +1753,17 @@
     // ONBOARDING
     // ============================================================
     function checkOnboarding() {
-        if (!isLoggedIn()) { showAuthScreen(); return; }
+        // Auto-login se já tem dados (usuários existentes antes do auth)
+        if (!isLoggedIn()) {
+            const hasData = localStorage.getItem('pg_members') || localStorage.getItem('pg_incomes') || localStorage.getItem('pg_expenses');
+            if (hasData) {
+                loginUser('Usuário', 'usuario@prontogestao.app');
+                localStorage.setItem('pg_onboarding_done', '1');
+            } else {
+                showAuthScreen();
+                return;
+            }
+        }
         if (!localStorage.getItem('pg_onboarding_done')) {
             showOnboarding();
         } else {
@@ -1996,27 +2006,36 @@
             });
             save(KEYS.members, members);
 
-            // Create initial income if provided
+            // Create 12 months of recurrent income if provided
             if (income > 0) {
                 const today = new Date();
-                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                const dd = String(today.getDate()).padStart(2, '0');
                 const incomes = load(KEYS.incomes);
-                incomes.push({
-                    id: uid(),
-                    date: `${today.getFullYear()}-${mm}-${dd}`,
-                    value: income,
-                    category: 'Salário',
-                    source: 'Renda principal',
-                    bank: '',
-                    memberId: members[0].id,
-                    status: '',
-                    recurrenceType: 'recorrente',
-                    recurrenceDay: today.getDate(),
-                    recurrenceTotal: null,
-                    recurrenceParent: uid(),
-                    installmentLabel: '',
-                });
+                const parentId = uid();
+                const day = today.getDate();
+
+                for (let i = 0; i < 12; i++) {
+                    let m = today.getMonth() + i;
+                    let y = today.getFullYear();
+                    while (m > 11) { m -= 12; y++; }
+                    const mm = String(m + 1).padStart(2, '0');
+                    const dd = String(Math.min(day, 28)).padStart(2, '0');
+
+                    incomes.push({
+                        id: uid(),
+                        date: `${y}-${mm}-${dd}`,
+                        value: income,
+                        category: 'Salário',
+                        source: 'Renda principal',
+                        bank: '',
+                        memberId: members[0].id,
+                        status: i === 0 ? '' : '',
+                        recurrenceType: 'recorrente',
+                        recurrenceDay: day,
+                        recurrenceTotal: null,
+                        recurrenceParent: parentId,
+                        installmentLabel: '',
+                    });
+                }
                 save(KEYS.incomes, incomes);
             }
 
