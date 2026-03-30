@@ -67,9 +67,9 @@
                     <span id="themeLabel">Modo Claro</span>
                 </button>
                 <div class="month-selector">
-                    <button id="prevMonth" class="month-nav">&lt;</button>
+                    <button id="prevMonth" class="month-nav"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
                     <span id="currentMonth">Março 2026</span>
-                    <button id="nextMonth" class="month-nav">&gt;</button>
+                    <button id="nextMonth" class="month-nav"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
                 </div>
             </div>
         </aside>
@@ -85,9 +85,9 @@
                 <button class="mobile-menu-btn" id="mobileMenuBtn">&#9776;</button>
                 <span class="mobile-logo">ProntoGestão</span>
                 <div class="mobile-month">
-                    <button id="prevMonthMobile" class="month-nav-sm">&lt;</button>
+                    <button id="prevMonthMobile" class="month-nav-sm"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
                     <span id="currentMonthMobile">Mar 2026</span>
-                    <button id="nextMonthMobile" class="month-nav-sm">&gt;</button>
+                    <button id="nextMonthMobile" class="month-nav-sm"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
                 </div>
             </div>
 
@@ -189,24 +189,24 @@
 
                 <!-- Navegador de mês -->
                 <div class="page-month-nav">
-                    <button class="month-nav-lg" id="prevMonthInc">&lt;</button>
+                    <button class="month-nav-lg" id="prevMonthInc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
                     <span class="month-nav-label" id="monthLabelInc">Março 2026</span>
-                    <button class="month-nav-lg" id="nextMonthInc">&gt;</button>
+                    <button class="month-nav-lg" id="nextMonthInc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
                 </div>
 
                 <!-- Cards resumo -->
                 <div class="summary-cards summary-cards-sm">
-                    <div class="summary-card income">
+                    <div class="summary-card">
                         <span class="card-label">Total Previsto</span>
                         <span class="card-value" id="incTotalCard">R$ 0</span>
                     </div>
-                    <div class="summary-card" style="border-left:3px solid var(--income)">
+                    <div class="summary-card">
                         <span class="card-label">Recebido</span>
-                        <span class="card-value" id="incReceivedCard" style="color:var(--income)">R$ 0</span>
+                        <span class="card-value income-value" id="incReceivedCard">R$ 0</span>
                     </div>
-                    <div class="summary-card" style="border-left:3px solid var(--warning)">
+                    <div class="summary-card">
                         <span class="card-label">Pendente</span>
-                        <span class="card-value" id="incPendingCard" style="color:var(--warning)">R$ 0</span>
+                        <span class="card-value pending-value" id="incPendingCard">R$ 0</span>
                     </div>
                 </div>
 
@@ -259,32 +259,32 @@
 
                 <!-- Navegador de mês -->
                 <div class="page-month-nav">
-                    <button class="month-nav-lg" id="prevMonthExp">&lt;</button>
+                    <button class="month-nav-lg" id="prevMonthExp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
                     <span class="month-nav-label" id="monthLabelExp">Março 2026</span>
-                    <button class="month-nav-lg" id="nextMonthExp">&gt;</button>
+                    <button class="month-nav-lg" id="nextMonthExp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
                 </div>
 
                 <!-- Cards resumo -->
-                <div class="summary-cards summary-cards-sm" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))">
-                    <div class="summary-card expense">
+                <div class="summary-cards summary-cards-sm">
+                    <div class="summary-card">
                         <span class="card-label">Total</span>
-                        <span class="card-value" id="expTotalCard">R$ 0</span>
+                        <span class="card-value expense-value" id="expTotalCard">R$ 0</span>
                     </div>
-                    <div class="summary-card" style="border-left:3px solid var(--income)">
+                    <div class="summary-card">
                         <span class="card-label">Pago</span>
-                        <span class="card-value" id="expPaidCard" style="color:var(--income)">R$ 0</span>
+                        <span class="card-value income-value" id="expPaidCard">R$ 0</span>
                     </div>
-                    <div class="summary-card" style="border-left:3px solid var(--warning)">
+                    <div class="summary-card">
                         <span class="card-label">Pendente</span>
-                        <span class="card-value" id="expPendingCard" style="color:var(--warning)">R$ 0</span>
+                        <span class="card-value pending-value" id="expPendingCard">R$ 0</span>
                     </div>
-                    <div class="summary-card" style="border-left:3px solid var(--need)">
+                    <div class="summary-card">
                         <span class="card-label">Fixo</span>
-                        <span class="card-value" id="expFixoCard" style="color:var(--need)">R$ 0</span>
+                        <span class="card-value" id="expFixoCard">R$ 0</span>
                     </div>
-                    <div class="summary-card" style="border-left:3px solid var(--want)">
+                    <div class="summary-card">
                         <span class="card-label">Variável</span>
-                        <span class="card-value" id="expVarCard" style="color:var(--want)">R$ 0</span>
+                        <span class="card-value" id="expVarCard">R$ 0</span>
                     </div>
                 </div>
 

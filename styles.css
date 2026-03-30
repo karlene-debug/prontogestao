@@ -366,6 +366,10 @@ th.actions-header {
 .summary-card.balance .card-value.positive { color: var(--balance-pos); }
 .summary-card.balance .card-value.negative { color: var(--balance-neg); }
 
+.income-value { color: var(--income); }
+.expense-value { color: var(--expense); }
+.pending-value { color: var(--text-muted); }
+
 /* ---- BULK ACTIONS ---- */
 .bulk-actions {
     display: flex;
