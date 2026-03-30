@@ -23,7 +23,7 @@
     --want: #737373;
     --financial: #D4D4D4;
     --debt: #F87171;
-    --warning: #FBBF24;
+    --warning: #1E3A5F;
     --radius: 12px;
     --radius-sm: 8px;
     --sidebar-width: 240px;
@@ -52,7 +52,7 @@
     --want: #A3A3A3;
     --financial: #404040;
     --debt: #DC2626;
-    --warning: #D97706;
+    --warning: #1E3A5F;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -368,7 +368,7 @@ th.actions-header {
 
 .income-value { color: var(--income); }
 .expense-value { color: var(--expense); }
-.pending-value { color: var(--text-muted); }
+.pending-value { color: var(--warning); }
 
 /* ---- BULK ACTIONS ---- */
 .bulk-actions {
@@ -887,7 +887,7 @@ th.actions-header {
     font-weight: 500;
 }
 .status-badge.paid { background: var(--income-bg); color: var(--income); }
-.status-badge.pending { background: var(--bg-hover); color: var(--text-muted); }
+.status-badge.pending { background: rgba(30, 58, 95, 0.1); color: var(--warning); }
 
 /* Recurrence badges */
 .rec-badge {
