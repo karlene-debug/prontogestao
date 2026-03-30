@@ -933,6 +933,30 @@ th.actions-header {
     color: var(--text-primary);
     font-size: 13px;
 }
+.budget-bar-cell { min-width: 160px; }
+.budget-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.budget-bar-track {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-hover);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.budget-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+.budget-bar-wrap span {
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 36px;
+    text-align: right;
+}
 
 /* ---- PAGE MONTH NAV ---- */
 .page-month-nav {

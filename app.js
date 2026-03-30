@@ -572,12 +572,14 @@
                 const variation = budgetVal > 0 ? pct(budgetVal - realVal, budgetVal) : (realVal > 0 ? -100 : 0);
                 const varClass = variation >= 0 ? 'variation-positive' : 'variation-negative';
                 const status = realVal === 0 ? '-' : (realVal <= budgetVal || budgetVal === 0 ? '&#10003;' : '&#9888;');
+                const barPct = budgetVal > 0 ? Math.min(100, Math.round((realVal / budgetVal) * 100)) : (realVal > 0 ? 100 : 0);
+                const barColor = barPct > 100 || (budgetVal > 0 && realVal > budgetVal) ? 'var(--expense)' : 'var(--text-primary)';
 
                 html += `<tr>
                     <td style="padding-left:24px">${c.name}</td>
                     <td>${budgetVal > 0 ? currency(budgetVal) : '-'}</td>
                     <td>${realVal > 0 ? currency(realVal) : '-'}</td>
-                    <td class="${varClass}">${budgetVal > 0 || realVal > 0 ? variation + '%' : '-'}</td>
+                    <td class="budget-bar-cell">${budgetVal > 0 || realVal > 0 ? `<div class="budget-bar-wrap"><div class="budget-bar-track"><div class="budget-bar-fill" style="width:${barPct}%;background:${barColor}"></div></div><span class="${varClass}">${variation}%</span></div>` : '-'}</td>
                     <td>${status}</td>
                 </tr>`;
             });
