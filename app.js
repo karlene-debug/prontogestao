@@ -187,10 +187,10 @@
 
     $('prevMonth').addEventListener('click', prevMonth);
     $('nextMonth').addEventListener('click', nextMonth);
-    $('prevMonthInc').addEventListener('click', prevMonth);
-    $('nextMonthInc').addEventListener('click', nextMonth);
-    $('prevMonthExp').addEventListener('click', prevMonth);
-    $('nextMonthExp').addEventListener('click', nextMonth);
+    if ($('prevMonthInc')) $('prevMonthInc').addEventListener('click', prevMonth);
+    if ($('nextMonthInc')) $('nextMonthInc').addEventListener('click', nextMonth);
+    if ($('prevMonthExp')) $('prevMonthExp').addEventListener('click', prevMonth);
+    if ($('nextMonthExp')) $('nextMonthExp').addEventListener('click', nextMonth);
     $('prevMonthMobile').addEventListener('click', prevMonth);
     $('nextMonthMobile').addEventListener('click', nextMonth);
 
