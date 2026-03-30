@@ -90,8 +90,8 @@
         const m = load(KEYS.members);
         if (m.length === 0) {
             const defaults = [
-                { id: uid(), name: 'Pessoa 1', color: '#6c5ce7', role: 'Titular' },
-                { id: uid(), name: 'Pessoa 2', color: '#e84393', role: 'Cônjuge' },
+                { id: uid(), name: 'Pessoa 1', color: '#3B82F6', role: 'Titular' },
+                { id: uid(), name: 'Pessoa 2', color: '#8B5CF6', role: 'Cônjuge' },
             ];
             save(KEYS.members, defaults);
             return defaults;
@@ -716,9 +716,9 @@
 
         openModal('Nova Conta', body, () => {
             const name = $('fCatName').value.trim();
-            if (!name) return;
+            if (!name) { toast('Informe o nome da conta.', 'error'); return false; }
             const existing = getAllCategories().find(c => c.name.toLowerCase() === name.toLowerCase());
-            if (existing) { toast('Já existe uma conta com esse nome.', 'error'); return; }
+            if (existing) { toast('Já existe uma conta com esse nome.', 'error'); return false; }
 
             const cat = {
                 name: name,
@@ -908,8 +908,8 @@
         $('modalBody').innerHTML = bodyHtml;
         $('modalOverlay').classList.add('open');
         $('modalSave').onclick = () => {
-            onSave();
-            closeModal();
+            const result = onSave();
+            if (result !== false) closeModal();
         };
     }
 
@@ -1002,10 +1002,14 @@
 
         openModal(isEdit ? 'Editar Entrada' : 'Nova Entrada', body, () => {
             const recType = $('fIncType').value;
+            const val = parseValue($('fIncValue').value);
+            if (!val || val <= 0) { toast('Informe o valor.', 'error'); return false; }
+            if (recType === 'avulsa' && !$('fIncDate').value) { toast('Informe a data.', 'error'); return false; }
+            if ((recType === 'recorrente' || recType === 'parcelada') && !$('fIncDay').value) { toast('Informe o dia do recebimento.', 'error'); return false; }
             const data = {
                 id: i.id || uid(),
                 date: $('fIncDate').value,
-                value: parseValue($('fIncValue').value),
+                value: val,
                 bank: $('fIncBank').value,
                 category: $('fIncCat').value,
                 source: $('fIncSource').value,
@@ -1196,11 +1200,15 @@
         openModal(isEdit ? 'Editar Saída' : 'Nova Saída', body, () => {
             const recType = $('fExpRecType').value;
             const installCount = parseInt($('fExpInstallCount').value) || 0;
+            const val = parseValue($('fExpValue').value);
+            if (!val || val <= 0) { toast('Informe o valor.', 'error'); return false; }
+            if (!$('fExpDate').value) { toast('Informe a data.', 'error'); return false; }
+            if (recType === 'parcelada' && installCount < 2) { toast('Informe a quantidade de parcelas (mínimo 2).', 'error'); return false; }
 
             const data = {
                 id: e.id || uid(),
                 date: $('fExpDate').value,
-                value: parseValue($('fExpValue').value),
+                value: val,
                 bank: $('fExpBank').value,
                 paymentType: $('fExpPayment').value,
                 category: $('fExpCat').value,
@@ -1341,7 +1349,7 @@
                 </div>
                 <div class="form-group">
                     <label>Cor</label>
-                    <input type="color" id="fMemColor" value="${m.color || '#6c5ce7'}">
+                    <input type="color" id="fMemColor" value="${m.color || '#3B82F6'}">
                 </div>
             </div>
         `;

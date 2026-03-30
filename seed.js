@@ -13,7 +13,7 @@
     // --- MEMBROS ---
     const MEMBER_1 = 'mem_karlene';
     const members = [
-        { id: MEMBER_1, name: 'Karlene', color: '#6c5ce7', role: 'Titular' },
+        { id: MEMBER_1, name: 'Karlene', color: '#3B82F6', role: 'Titular' },
     ];
 
     // --- ENTRADAS 2026 (12 meses x 2 fontes) ---

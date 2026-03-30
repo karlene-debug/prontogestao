@@ -1366,7 +1366,8 @@ th.actions-header {
     .golden-pct { font-size: 24px; }
     .summary-cards-sm { grid-template-columns: 1fr; }
     .auth-card { padding: 24px 20px; }
-    .toast { max-width: 90vw; right: 5vw; }
+    .toast-container { right: 12px; left: 12px; }
+    .toast { max-width: 100%; }
 }
 
 /* ---- SCROLLBAR ---- */
