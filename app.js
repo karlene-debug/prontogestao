@@ -263,7 +263,8 @@
             { key: 'Dívidas', bar: 'ruleDebtBar', pctEl: 'ruleDebtPct', target: 0 },
         ];
         condItems.forEach(ci => {
-            const p = totalOut > 0 ? pct(byCondition[ci.key], totalOut) : 0;
+            const base = totalIn > 0 ? totalIn : totalOut;
+            const p = base > 0 ? pct(byCondition[ci.key], base) : 0;
             const overBudget = ci.target > 0 && p > ci.target;
             $(ci.pctEl).textContent = p + '%';
             $(ci.pctEl).style.color = overBudget ? 'var(--expense)' : '';
@@ -286,7 +287,7 @@
             <div class="group-bar-item">
                 <span class="group-bar-label">${g}</span>
                 <div class="group-bar-track">
-                    <div class="group-bar-fill" style="width:${pct(v, maxGroup)}%;background:${GROUP_COLORS[g] || '#6c5ce7'}"></div>
+                    <div class="group-bar-fill" style="width:${pct(v, maxGroup)}%;background:${GROUP_COLORS[g] || 'var(--text-muted)'}"></div>
                 </div>
                 <span class="group-bar-value">${currency(v)}</span>
             </div>
@@ -305,7 +306,7 @@
                 <span class="pay-value">${currency(v)}</span>
                 <span class="pay-pct">${pct(v, totalOut)}%</span>
             </div>
-        `).join('') || '<p style="color:var(--text-muted);text-align:center;padding:20px">Sem dados</p>';
+        `).join('') || '<div class="empty-state" style="padding:24px"><div class="empty-state-icon" style="font-size:24px">—</div><div class="empty-state-desc">Sem dados neste mês</div></div>';
 
         // Top 10 Gastos
         const sorted = [...expenses].sort((a, b) => Number(b.value) - Number(a.value)).slice(0, 10);
@@ -316,7 +317,7 @@
                 <span class="top-cat">${e.category || ''}</span>
                 <span class="top-val">${currency(e.value)}</span>
             </div>
-        `).join('') || '<p style="color:var(--text-muted);text-align:center;padding:20px">Sem dados</p>';
+        `).join('') || '<div class="empty-state" style="padding:24px"><div class="empty-state-icon" style="font-size:24px">—</div><div class="empty-state-desc">Sem dados neste mês</div></div>';
 
         // Evolução Mensal (últimos 6 meses)
         renderEvolution();
@@ -1895,7 +1896,6 @@
             btnExport.addEventListener('click', () => {
                 const data = {};
                 Object.keys(KEYS).forEach(k => { data[k] = load(KEYS[k]); });
-                data.budgets = load(KEYS.budgets);
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');

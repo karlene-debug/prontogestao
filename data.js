@@ -88,20 +88,20 @@ const GROUPS = [
 ];
 
 const GROUP_COLORS = {
-    'Alimentação Básica': '#00b894',
-    'Habitação': '#0984e3',
-    'Carreira e Educação': '#6c5ce7',
-    'Filhos': '#e84393',
-    'Pets': '#fdcb6e',
-    'Saúde': '#e17055',
-    'Transporte': '#00cec9',
-    'Bens de Consumo': '#a29bfe',
-    'Gastronomia e Social': '#fab1a0',
-    'Lazer': '#55efc4',
-    'Pessoal': '#fd79a8',
-    'Social': '#74b9ff',
-    'Dívidas': '#d63031',
-    'Investimentos': '#00b894',
+    'Alimentação Básica': '#737373',
+    'Habitação': '#525252',
+    'Carreira e Educação': '#6B6B6B',
+    'Filhos': '#8A8A8A',
+    'Pets': '#999999',
+    'Saúde': '#5C5C5C',
+    'Transporte': '#7A7A7A',
+    'Bens de Consumo': '#8F8F8F',
+    'Gastronomia e Social': '#A3A3A3',
+    'Lazer': '#6E6E6E',
+    'Pessoal': '#858585',
+    'Social': '#9C9C9C',
+    'Dívidas': '#F87171',
+    'Investimentos': '#4ADE80',
 };
 
 const CONDITIONS = ['Necessidade', 'Desejo', 'Financeiro', 'Dívidas'];
