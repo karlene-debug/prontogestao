@@ -2030,23 +2030,14 @@
     // ONBOARDING
     // ============================================================
     function checkOnboarding() {
-        // Auto-login se já tem dados (usuários existentes antes do auth)
+        // Login desativado temporariamente — vai direto pro app
+        // Será reativado com Supabase na Fase 2
         if (!isLoggedIn()) {
-            const hasData = localStorage.getItem('pg_members') || localStorage.getItem('pg_incomes') || localStorage.getItem('pg_expenses');
-            if (hasData) {
-                loginUser('Usuário', 'usuario@prontogestao.app');
-                localStorage.setItem('pg_onboarding_done', '1');
-            } else {
-                showAuthScreen();
-                return;
-            }
+            loginUser('Usuário', 'usuario@prontogestao.app');
+            localStorage.setItem('pg_onboarding_done', '1');
         }
-        if (!localStorage.getItem('pg_onboarding_done')) {
-            showOnboarding();
-        } else {
-            showApp();
-            initApp();
-        }
+        showApp();
+        initApp();
     }
 
     function showOnboarding() {
