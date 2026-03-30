@@ -435,55 +435,56 @@ th.actions-header {
 }
 
 /* ---- RULE BARS (50/30/20) ---- */
-.rule-bars { display: flex; flex-direction: column; gap: 14px; }
+.rule-bars { display: flex; flex-direction: column; gap: 16px; }
 .rule-header {
     display: flex;
     justify-content: space-between;
-    font-size: 0.82rem;
+    font-size: 13px;
     margin-bottom: 6px;
 }
 .rule-values { color: var(--text-muted); }
-.rule-values span { font-weight: 600; }
+.rule-values span { font-weight: 500; }
 
 .progress-bar {
-    height: 10px;
-    background: var(--bg-primary);
-    border-radius: 5px;
+    height: 4px;
+    background: var(--bg-hover);
+    border-radius: 2px;
     overflow: hidden;
 }
 .progress-fill {
     height: 100%;
-    border-radius: 5px;
+    border-radius: 2px;
     transition: width 0.5s ease;
 }
-.progress-fill.need { background: var(--need); }
-.progress-fill.want { background: var(--want); }
-.progress-fill.financial { background: var(--financial); }
-.progress-fill.debt { background: var(--debt); }
+.progress-fill.need { background: var(--text-primary); }
+.progress-fill.want { background: var(--text-secondary); }
+.progress-fill.financial { background: var(--text-muted); }
+.progress-fill.debt { background: var(--expense); }
 
 /* ---- GROUP CHART (horizontal bars) ---- */
-.group-chart { display: flex; flex-direction: column; gap: 10px; }
+.group-chart { display: flex; flex-direction: column; gap: 20px; }
 .group-bar-item {
     display: grid;
-    grid-template-columns: 140px 1fr 80px;
+    grid-template-columns: 140px 1fr 90px;
     align-items: center;
     gap: 12px;
-    font-size: 0.82rem;
+    font-size: 13px;
 }
 .group-bar-label { color: var(--text-secondary); text-align: right; }
 .group-bar-track {
-    height: 8px;
-    background: var(--bg-primary);
-    border-radius: 4px;
+    height: 6px;
+    background: var(--bg-hover);
+    border-radius: 3px;
     overflow: hidden;
 }
 .group-bar-fill {
     height: 100%;
-    border-radius: 4px;
-    background: var(--accent);
+    border-radius: 3px;
+    background: var(--text-primary);
     transition: width 0.5s ease;
 }
-.group-bar-value { font-weight: 600; font-size: 0.8rem; }
+[data-theme="light"] .group-bar-fill { background: #18181B; }
+.group-bar-value { font-weight: 500; font-size: 13px; color: var(--text-primary); }
 
 /* ---- PAYMENT CHART ---- */
 .payment-chart {
@@ -492,26 +493,28 @@ th.actions-header {
     gap: 12px;
 }
 .payment-item {
-    background: var(--bg-primary);
-    border-radius: var(--radius-sm);
-    padding: 14px;
+    background: var(--bg-hover);
+    border-radius: 8px;
+    padding: 16px;
     text-align: center;
 }
 .payment-item .pay-label {
-    font-size: 0.75rem;
+    font-size: 11px;
     color: var(--text-muted);
     text-transform: uppercase;
+    letter-spacing: 0.08em;
     display: block;
     margin-bottom: 6px;
+    font-weight: 500;
 }
 .payment-item .pay-value {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
     color: var(--text-primary);
 }
 .payment-item .pay-pct {
-    font-size: 0.72rem;
-    color: var(--text-secondary);
+    font-size: 12px;
+    color: var(--text-muted);
     margin-top: 2px;
     display: block;
 }
@@ -529,46 +532,47 @@ th.actions-header {
 .dashboard-grid-2 .card { margin-bottom: 0; }
 
 /* ---- TOP EXPENSES ---- */
-.top-expenses { display: flex; flex-direction: column; gap: 8px; }
+.top-expenses { display: flex; flex-direction: column; gap: 4px; }
 .top-expense-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
-    background: var(--bg-primary);
-    border-radius: var(--radius-sm);
-    font-size: 0.82rem;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
 }
+.top-expense-item:last-child { border-bottom: none; }
 .top-expense-item .top-rank {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--bg-hover);
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.68rem;
-    font-weight: 700;
-    margin-right: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-right: 12px;
     flex-shrink: 0;
 }
 .top-expense-item .top-desc {
     flex: 1;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     margin-right: 8px;
+    font-weight: 400;
 }
 .top-expense-item .top-cat {
-    font-size: 0.7rem;
+    font-size: 12px;
     color: var(--text-muted);
     margin-right: 12px;
     white-space: nowrap;
 }
 .top-expense-item .top-val {
-    font-weight: 700;
+    font-weight: 500;
     color: var(--expense);
     white-space: nowrap;
 }
@@ -597,19 +601,20 @@ th.actions-header {
 }
 .evo-bar {
     width: 20px;
-    border-radius: 4px 4px 0 0;
+    border-radius: 3px 3px 0 0;
     min-height: 2px;
     transition: height 0.5s ease;
 }
 .evo-bar.income-bar { background: var(--income); }
-.evo-bar.expense-bar { background: var(--expense); }
+.evo-bar.expense-bar { background: var(--text-muted); }
 .evo-month-label {
-    font-size: 0.72rem;
+    font-size: 11px;
     color: var(--text-muted);
     text-align: center;
+    font-weight: 500;
 }
 .evo-values {
-    font-size: 0.68rem;
+    font-size: 11px;
     color: var(--text-secondary);
     text-align: center;
     line-height: 1.4;
