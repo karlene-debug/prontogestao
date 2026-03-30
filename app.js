@@ -218,6 +218,7 @@
             case 'fluxo': renderFluxo(); break;
             case 'membros': renderMembros(); break;
             case 'planejamento': renderPlanejamento(); break;
+            case 'configuracoes': renderConfiguracoes(); break;
         }
     }
 
@@ -1658,12 +1659,14 @@
         localStorage.setItem('pg_theme', theme);
         const icon = $('themeIcon');
         const label = $('themeLabel');
-        if (theme === 'light') {
-            icon.textContent = '\u2600';
-            label.textContent = 'Modo Escuro';
-        } else {
-            icon.textContent = '\u263D';
-            label.textContent = 'Modo Claro';
+        if (icon) {
+            if (theme === 'light') {
+                icon.textContent = '\u2600';
+                label.textContent = 'Modo Escuro';
+            } else {
+                icon.textContent = '\u263D';
+                label.textContent = 'Modo Claro';
+            }
         }
     }
 
@@ -1673,11 +1676,363 @@
     });
 
     // ============================================================
+    // AUTH (layout pronto — lógica real virá com Supabase)
+    // ============================================================
+    const AUTH_KEY = 'pg_auth';
+
+    function isLoggedIn() {
+        return !!localStorage.getItem(AUTH_KEY);
+    }
+
+    function loginUser(name, email) {
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ name, email, loggedAt: Date.now() }));
+    }
+
+    function logoutUser() {
+        localStorage.removeItem(AUTH_KEY);
+        localStorage.removeItem('pg_onboarding_done');
+    }
+
+    function getAuthUser() {
+        try { return JSON.parse(localStorage.getItem(AUTH_KEY)); } catch { return null; }
+    }
+
+    function showAuthScreen() {
+        $('authScreen').style.display = '';
+        $('app').style.display = 'none';
+        const onb = document.getElementById('onboardingScreen');
+        if (onb) onb.style.display = 'none';
+    }
+
+    function showApp() {
+        $('authScreen').style.display = 'none';
+        $('app').style.display = '';
+        const onb = document.getElementById('onboardingScreen');
+        if (onb) onb.style.display = 'none';
+    }
+
+    // Auth form handlers
+    $('btnLogin').addEventListener('click', () => {
+        const email = $('loginEmail').value.trim();
+        const pass = $('loginPassword').value;
+        if (!email || !pass) { toast('Preencha email e senha.', 'error'); return; }
+        // Simulado — real virá com Supabase
+        loginUser(email.split('@')[0], email);
+        toast('Login realizado!');
+        checkOnboarding();
+    });
+
+    $('btnRegister').addEventListener('click', () => {
+        const name = $('regName').value.trim();
+        const email = $('regEmail').value.trim();
+        const pass = $('regPassword').value;
+        const confirm = $('regPasswordConfirm').value;
+        if (!name || !email || !pass) { toast('Preencha todos os campos.', 'error'); return; }
+        if (pass !== confirm) { toast('As senhas não coincidem.', 'error'); return; }
+        if (pass.length < 6) { toast('A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+        loginUser(name, email);
+        toast('Conta criada!');
+        checkOnboarding();
+    });
+
+    $('btnForgot').addEventListener('click', () => {
+        const email = $('forgotEmail').value.trim();
+        if (!email) { toast('Informe seu email.', 'error'); return; }
+        toast('Link de recuperação enviado para ' + email, 'info');
+        setTimeout(() => window.App.showAuth('login'), 2000);
+    });
+
+    $('btnGoogleLogin').addEventListener('click', () => {
+        // Simulado — real virá com Supabase
+        loginUser('Usuário Google', 'user@google.com');
+        toast('Login com Google realizado!');
+        checkOnboarding();
+    });
+
+    // ============================================================
+    // ONBOARDING
+    // ============================================================
+    function checkOnboarding() {
+        if (!isLoggedIn()) { showAuthScreen(); return; }
+        if (!localStorage.getItem('pg_onboarding_done')) {
+            showOnboarding();
+        } else {
+            showApp();
+            initApp();
+        }
+    }
+
+    function showOnboarding() {
+        $('authScreen').style.display = 'none';
+        $('app').style.display = 'none';
+        let onb = document.getElementById('onboardingScreen');
+        if (!onb) {
+            onb = document.createElement('div');
+            onb.id = 'onboardingScreen';
+            onb.className = 'onboarding-screen';
+            document.body.appendChild(onb);
+        }
+        onb.style.display = '';
+        renderOnboardingStep(1);
+    }
+
+    let onboardingData = { name: '', members: [], income: '' };
+
+    function renderOnboardingStep(step) {
+        const onb = document.getElementById('onboardingScreen');
+        const user = getAuthUser();
+
+        const steps = `<div class="onboarding-steps">
+            <div class="onboarding-step ${step >= 1 ? (step > 1 ? 'done' : 'active') : ''}"></div>
+            <div class="onboarding-step ${step >= 2 ? (step > 2 ? 'done' : 'active') : ''}"></div>
+            <div class="onboarding-step ${step >= 3 ? 'active' : ''}"></div>
+        </div>`;
+
+        if (step === 1) {
+            onb.innerHTML = `<div class="onboarding-container"><div class="onboarding-card">
+                ${steps}
+                <h2 class="onboarding-title">Bem-vindo ao ProntoGestão!</h2>
+                <p class="onboarding-desc">Vamos configurar sua conta em 3 passos rápidos.</p>
+                <div class="form-group">
+                    <label>Como quer ser chamado?</label>
+                    <input type="text" id="onbName" value="${user ? user.name : ''}" placeholder="Seu nome">
+                </div>
+                <div class="onboarding-actions">
+                    <div></div>
+                    <button class="btn-primary" onclick="App.onboardingNext(1)">Próximo</button>
+                </div>
+            </div></div>`;
+        } else if (step === 2) {
+            const membersList = onboardingData.members.map((m, i) =>
+                `<div class="settings-row"><span class="settings-row-label">${m}</span><button class="btn-action danger" onclick="App.onboardingRemoveMember(${i})">Remover</button></div>`
+            ).join('');
+            onb.innerHTML = `<div class="onboarding-container"><div class="onboarding-card">
+                ${steps}
+                <h2 class="onboarding-title">Membros da família</h2>
+                <p class="onboarding-desc">Adicione as pessoas que compartilham as finanças.</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome do membro</label>
+                        <input type="text" id="onbMemberName" placeholder="Ex: Maria">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end">
+                        <button class="btn-secondary" onclick="App.onboardingAddMember()" style="width:100%">Adicionar</button>
+                    </div>
+                </div>
+                <div id="onbMembersList">${membersList || '<p style="color:var(--text-muted);font-size:13px">Nenhum membro adicionado ainda</p>'}</div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="App.onboardingBack(2)">Voltar</button>
+                    <button class="btn-primary" onclick="App.onboardingNext(2)">Próximo</button>
+                </div>
+            </div></div>`;
+        } else if (step === 3) {
+            onb.innerHTML = `<div class="onboarding-container"><div class="onboarding-card">
+                ${steps}
+                <h2 class="onboarding-title">Renda mensal</h2>
+                <p class="onboarding-desc">Informe a renda total da família para calcularmos a regra 50/30/20.</p>
+                <div class="form-group">
+                    <label>Renda mensal total</label>
+                    <input type="text" inputmode="decimal" id="onbIncome" value="${onboardingData.income}" placeholder="Ex: 10.000,00">
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="App.onboardingBack(3)">Voltar</button>
+                    <button class="btn-primary" onclick="App.onboardingFinish()">Começar!</button>
+                </div>
+            </div></div>`;
+        }
+    }
+
+    // ============================================================
+    // SETTINGS PAGE
+    // ============================================================
+    function renderConfiguracoes() {
+        const user = getAuthUser();
+        if (user) {
+            const nameEl = $('settingsName');
+            const emailEl = $('settingsEmail');
+            if (nameEl) nameEl.value = user.name || '';
+            if (emailEl) emailEl.value = user.email || '';
+        }
+    }
+
+    // Settings event listeners
+    setTimeout(() => {
+        const btnSave = $('btnSaveProfile');
+        if (btnSave) {
+            btnSave.addEventListener('click', () => {
+                const name = $('settingsName').value.trim();
+                if (!name) { toast('Informe seu nome.', 'error'); return; }
+                const user = getAuthUser();
+                if (user) {
+                    user.name = name;
+                    localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+                    toast('Perfil atualizado!');
+                }
+            });
+        }
+
+        const btnTheme = $('settingsThemeToggle');
+        if (btnTheme) {
+            btnTheme.addEventListener('click', () => {
+                const current = localStorage.getItem('pg_theme') || 'dark';
+                applyTheme(current === 'dark' ? 'light' : 'dark');
+                toast('Tema alterado!');
+            });
+        }
+
+        const btnExport = $('btnExportData');
+        if (btnExport) {
+            btnExport.addEventListener('click', () => {
+                const data = {};
+                Object.keys(KEYS).forEach(k => { data[k] = load(KEYS[k]); });
+                data.budgets = load(KEYS.budgets);
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `prontogestao-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click(); URL.revokeObjectURL(url);
+                toast('Dados exportados!');
+            });
+        }
+
+        const btnImport = $('btnImportData');
+        if (btnImport) {
+            btnImport.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        Object.keys(KEYS).forEach(k => {
+                            if (data[k]) save(KEYS[k], data[k]);
+                        });
+                        toast('Dados importados!');
+                        renderCurrentPage();
+                    } catch { toast('Arquivo inválido.', 'error'); }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        const btnClear = $('btnClearData');
+        if (btnClear) {
+            btnClear.addEventListener('click', () => {
+                if (!confirm('Tem certeza que deseja apagar TODOS os dados? Esta ação não pode ser desfeita.')) return;
+                Object.keys(KEYS).forEach(k => localStorage.removeItem(KEYS[k]));
+                toast('Todos os dados foram apagados.');
+                renderCurrentPage();
+            });
+        }
+
+        const btnLogout = $('btnLogout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                logoutUser();
+                toast('Você saiu da conta.');
+                showAuthScreen();
+            });
+        }
+    }, 100);
+
+    // ============================================================
     // INIT
     // ============================================================
+    function initApp() {
+        populateMemberFilter();
+        updateMonthDisplay();
+        renderDashboard();
+    }
+
     loadTheme();
-    populateMemberFilter();
-    updateMonthDisplay();
-    renderDashboard();
+
+    // Add auth/onboarding methods to App
+    const authMethods = {
+        showAuth(screen) {
+            $('authLogin').style.display = screen === 'login' ? '' : 'none';
+            $('authRegister').style.display = screen === 'register' ? '' : 'none';
+            $('authForgot').style.display = screen === 'forgot' ? '' : 'none';
+        },
+        onboardingNext(step) {
+            if (step === 1) {
+                const name = document.getElementById('onbName').value.trim();
+                if (!name) { toast('Informe seu nome.', 'error'); return; }
+                onboardingData.name = name;
+                renderOnboardingStep(2);
+            } else if (step === 2) {
+                renderOnboardingStep(3);
+            }
+        },
+        onboardingBack(step) {
+            renderOnboardingStep(step - 1);
+        },
+        onboardingAddMember() {
+            const input = document.getElementById('onbMemberName');
+            const name = input.value.trim();
+            if (!name) return;
+            onboardingData.members.push(name);
+            input.value = '';
+            renderOnboardingStep(2);
+        },
+        onboardingRemoveMember(idx) {
+            onboardingData.members.splice(idx, 1);
+            renderOnboardingStep(2);
+        },
+        onboardingFinish() {
+            const income = parseValue(document.getElementById('onbIncome').value);
+            onboardingData.income = income;
+
+            // Save onboarding data
+            const user = getAuthUser();
+            if (user) {
+                user.name = onboardingData.name;
+                localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+            }
+
+            // Create members
+            const members = [{ id: uid(), name: onboardingData.name, role: 'Titular', color: '#3B82F6' }];
+            onboardingData.members.forEach(name => {
+                members.push({ id: uid(), name, role: 'Dependente', color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0') });
+            });
+            save(KEYS.members, members);
+
+            // Create initial income if provided
+            if (income > 0) {
+                const today = new Date();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const incomes = load(KEYS.incomes);
+                incomes.push({
+                    id: uid(),
+                    date: `${today.getFullYear()}-${mm}-${dd}`,
+                    value: income,
+                    category: 'Salário',
+                    source: 'Renda principal',
+                    bank: '',
+                    memberId: members[0].id,
+                    status: '',
+                    recurrenceType: 'recorrente',
+                    recurrenceDay: today.getDate(),
+                    recurrenceTotal: null,
+                    recurrenceParent: uid(),
+                    installmentLabel: '',
+                });
+                save(KEYS.incomes, incomes);
+            }
+
+            localStorage.setItem('pg_onboarding_done', '1');
+            toast('Tudo pronto! Bem-vindo ao ProntoGestão!');
+            showApp();
+            initApp();
+        },
+    };
+
+    // Merge auth methods into App after it's defined
+    setTimeout(() => {
+        Object.assign(window.App, authMethods);
+    }, 0);
+
+    // Check auth state
+    checkOnboarding();
 
 })();
