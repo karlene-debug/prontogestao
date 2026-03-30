@@ -376,15 +376,22 @@
         // Populate filters
         const cats = [...new Set(getIncomes().map(i => i.category).filter(Boolean))];
         const banks = [...new Set(getIncomes().map(i => i.bank).filter(Boolean))];
+        const memberNames = members.map(m => m.name);
         populateSelect($('filterIncCat'), cats, 'Todas as Categorias');
         populateSelect($('filterIncBank'), banks, 'Todos os Bancos');
+        if ($('filterIncMember')) populateSelect($('filterIncMember'), memberNames, 'Todos os Membros');
 
         // Apply filters
         const catF = $('filterIncCat').value;
         const bankF = $('filterIncBank').value;
         const typeF = $('filterIncType').value;
         const statusIF = $('filterIncStatus').value;
+        const memberF = $('filterIncMember') ? $('filterIncMember').value : 'all';
         const searchTerm = ($('searchIncome').value || '').toLowerCase().trim();
+        if (memberF !== 'all') {
+            const mem = members.find(m => m.name === memberF);
+            if (mem) incomes = incomes.filter(i => i.memberId === mem.id);
+        }
         if (catF !== 'all') incomes = incomes.filter(i => i.category === catF);
         if (bankF !== 'all') incomes = incomes.filter(i => i.bank === bankF);
         if (typeF !== 'all') incomes = incomes.filter(i => (i.recurrenceType || 'avulsa') === typeF);
@@ -540,16 +547,24 @@
             return cat ? cat.group : '';
         }).filter(Boolean))];
 
+        const memberNames = members.map(m => m.name);
         populateSelect($('filterBank'), banks, 'Todos os Bancos');
         populateSelect($('filterPayment'), payments, 'Tipo Pagamento');
         populateSelect($('filterGroup'), groups, 'Todos os Grupos');
+        if ($('filterExpMember')) populateSelect($('filterExpMember'), memberNames, 'Todos os Membros');
 
         // Apply filters
         const bankF = $('filterBank').value;
         const payF = $('filterPayment').value;
         const groupF = $('filterGroup').value;
         const statusF = $('filterStatus').value;
+        const memberF = $('filterExpMember') ? $('filterExpMember').value : 'all';
         const searchTerm = ($('searchExpense').value || '').toLowerCase().trim();
+
+        if (memberF !== 'all') {
+            const mem = members.find(m => m.name === memberF);
+            if (mem) expenses = expenses.filter(e => e.memberId === mem.id);
+        }
 
         if (bankF !== 'all') expenses = expenses.filter(e => e.bank === bankF);
         if (payF !== 'all') expenses = expenses.filter(e => e.paymentType === payF);
