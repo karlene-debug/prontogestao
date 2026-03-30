@@ -12,7 +12,10 @@
         expenses: 'pg_expenses',
         customCategories: 'pg_custom_categories',
         budgets: 'pg_budgets',
+        cards: 'pg_cards',
     };
+
+    function getCards() { return load(KEYS.cards); }
 
     // --- State ---
     let state = {
@@ -1028,7 +1031,7 @@
                 </div>
                 <div class="form-group">
                     <label>Valor</label>
-                    <input type="text" inputmode="decimal" id="fIncValue" value="${i.value || ''}" placeholder="0,00">
+                    <input type="number" step="0.01" min="0" id="fIncValue" value="${i.value ? Number(i.value).toFixed(2) : ''}" placeholder="0.00">
                 </div>
             </div>
             <div class="form-row" id="recurrenceRow" style="display:none">
@@ -1214,7 +1217,7 @@
         const isGeneratedInstallment = e.installmentParent;
 
         const catOptions = getAllCategories().map(c =>
-            `<option value="${c.name}" ${e.category === c.name ? 'selected' : ''}>${c.name}</option>`
+            `<option value="${c.name}">${c.name}</option>`
         ).join('');
 
         const body = `
@@ -1225,7 +1228,7 @@
                 </div>
                 <div class="form-group">
                     <label>Valor da Parcela</label>
-                    <input type="text" inputmode="decimal" id="fExpValue" value="${e.value || ''}" placeholder="0,00">
+                    <input type="number" step="0.01" min="0" id="fExpValue" value="${e.value ? Number(e.value).toFixed(2) : ''}" placeholder="0.00">
                 </div>
             </div>
             <div class="form-row">
@@ -1250,7 +1253,8 @@
                 </div>
                 <div class="form-group">
                     <label>Plano de Contas</label>
-                    <select id="fExpCat">${catOptions}</select>
+                    <input type="text" id="fExpCat" list="expCatList" value="${e.category || ''}" placeholder="Digite ou selecione..." autocomplete="off">
+                    <datalist id="expCatList">${catOptions}</datalist>
                 </div>
             </div>
             <div class="form-row">
@@ -1282,6 +1286,7 @@
                     </select>
                 </div>
             </div>
+            <div id="fExpCardInfo" style="margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted);display:none"></div>
             ${isGeneratedInstallment ? `<div style="margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted)">
                 ${e.recurrenceType === 'recorrente' ? 'Este lançamento faz parte de uma recorrência.' : `Parcela ${e.installments} - gerada automaticamente.`}
                 <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;color:var(--text-primary);font-size:13px">
@@ -1353,6 +1358,33 @@
             sel.addEventListener('change', () => {
                 $('installmentCountGroup').style.display = sel.value === 'parcelada' ? '' : 'none';
             });
+
+            // Show card billing info
+            function updateCardInfo() {
+                const bankEl = $('fExpBank');
+                const payEl = $('fExpPayment');
+                const infoEl = $('fExpCardInfo');
+                if (!bankEl || !payEl || !infoEl) return;
+                const bank = bankEl.value;
+                const pay = payEl.value;
+                if (pay === 'Crédito' && bank) {
+                    const card = getCards().find(c => c.bank === bank);
+                    if (card) {
+                        infoEl.style.display = '';
+                        infoEl.innerHTML = `<strong>${bank}</strong> — Fatura fecha dia <strong>${card.closeDay}</strong>, vence dia <strong>${card.dueDay}</strong>`;
+                    } else {
+                        infoEl.style.display = '';
+                        infoEl.innerHTML = `Cartão "${bank}" não cadastrado. <a href="#" onclick="App.navigate('configuracoes');return false" style="color:var(--text-primary);text-decoration:underline">Cadastrar nas Configurações</a>`;
+                    }
+                } else {
+                    infoEl.style.display = 'none';
+                }
+            }
+            const bankEl = $('fExpBank');
+            const payEl = $('fExpPayment');
+            if (bankEl) bankEl.addEventListener('change', updateCardInfo);
+            if (payEl) payEl.addEventListener('change', updateCardInfo);
+            updateCardInfo();
         }, 50);
     }
 
@@ -1492,6 +1524,7 @@
     // PUBLIC API (for onclick handlers in HTML)
     // ============================================================
     window.App = {
+        navigate(page) { navigate(page); },
         editIncome(id) {
             const item = getIncomes().find(i => i.id === id);
             if (item) openIncomeModal(item);
@@ -1587,6 +1620,12 @@
             save(KEYS.members, members.filter(m => m.id !== id));
             populateMemberFilter();
             renderCurrentPage();
+        },
+        removeCard(id) {
+            const cards = getCards().filter(c => c.id !== id);
+            save(KEYS.cards, cards);
+            toast('Cartão removido.');
+            renderCardSettings();
         },
         saveBudget(category, monthKey, value) {
             const budgets = getBudgets();
@@ -1962,6 +2001,26 @@
             if (nameEl) nameEl.value = user.name || '';
             if (emailEl) emailEl.value = user.email || '';
         }
+        renderCardSettings();
+    }
+
+    function renderCardSettings() {
+        const container = $('cardSettings');
+        if (!container) return;
+        const cards = getCards();
+        if (cards.length === 0) {
+            container.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">Nenhum cartão cadastrado.</p>';
+            return;
+        }
+        container.innerHTML = cards.map(c => `
+            <div class="settings-row" style="padding:10px 0">
+                <div class="settings-row-info">
+                    <span class="settings-row-label">${c.bank}</span>
+                    <span class="settings-row-desc">Fecha dia ${c.closeDay} · Vence dia ${c.dueDay}</span>
+                </div>
+                <button class="btn-action danger" onclick="App.removeCard('${c.id}')">Remover</button>
+            </div>
+        `).join('');
     }
 
     // Settings event listeners
@@ -2039,6 +2098,40 @@
                 logoutUser();
                 toast('Você saiu da conta.');
                 showAuthScreen();
+            });
+        }
+
+        const btnAddCard = $('btnAddCard');
+        if (btnAddCard) {
+            btnAddCard.addEventListener('click', () => {
+                openModal('Adicionar Cartão', `
+                    <div class="form-group">
+                        <label>Banco / Cartão</label>
+                        <select id="fCardBank">
+                            ${BANKS.map(b => `<option value="${b}">${b}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Dia do Fechamento</label>
+                            <input type="number" min="1" max="31" id="fCardClose" placeholder="Ex: 15">
+                        </div>
+                        <div class="form-group">
+                            <label>Dia do Vencimento</label>
+                            <input type="number" min="1" max="31" id="fCardDue" placeholder="Ex: 5">
+                        </div>
+                    </div>
+                `, () => {
+                    const bank = $('fCardBank').value;
+                    const closeDay = parseInt($('fCardClose').value);
+                    const dueDay = parseInt($('fCardDue').value);
+                    if (!closeDay || !dueDay) { toast('Informe os dias de fechamento e vencimento.', 'error'); return false; }
+                    const cards = getCards();
+                    cards.push({ id: uid(), bank, closeDay, dueDay });
+                    save(KEYS.cards, cards);
+                    toast('Cartão adicionado!');
+                    renderCardSettings();
+                });
             });
         }
     }, 100);
