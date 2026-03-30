@@ -443,6 +443,86 @@
         $('incTotalCard').textContent = currency(total);
         $('incReceivedCard').textContent = currency(received);
         $('incPendingCard').textContent = currency(pending);
+
+        // Mobile cards view
+        renderMobileCards('income', incomes);
+    }
+
+    function renderMobileCards(type, items) {
+        const containerId = type === 'income' ? 'mobileIncomeCards' : 'mobileExpenseCards';
+        const container = $(containerId);
+        if (!container) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(today);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+
+        const overdue = [];
+        const thisWeek = [];
+        const pending = [];
+        const done = [];
+
+        items.forEach(item => {
+            const isPaid = item.status === 'Pg';
+            if (isPaid) { done.push(item); return; }
+            const d = new Date(item.date + 'T00:00:00');
+            if (d < today) { overdue.push(item); }
+            else if (d <= weekEnd) { thisWeek.push(item); }
+            else { pending.push(item); }
+        });
+
+        const isIncome = type === 'income';
+        const actionLabel = isIncome ? 'Receber' : 'Pagar';
+        const doneLabel = isIncome ? 'Recebido' : 'Pago';
+        const toggleFn = isIncome ? 'toggleIncomeStatus' : 'toggleExpenseStatus';
+        const valueColor = isIncome ? 'var(--income)' : 'var(--expense)';
+
+        function renderGroup(label, groupItems, cssClass, open) {
+            if (groupItems.length === 0) return '';
+            const total = groupItems.reduce((s, i) => s + Number(i.value), 0);
+            return `<div class="status-group ${cssClass}">
+                <div class="status-group-header${open ? ' open' : ''}" onclick="this.classList.toggle('open')">
+                    <div class="status-group-left">
+                        <span class="status-group-label">${label}</span>
+                        <span class="status-group-count">${groupItems.length} ${groupItems.length === 1 ? 'item' : 'itens'}</span>
+                    </div>
+                    <div class="status-group-right">
+                        <span class="status-group-value">${currency(total)}</span>
+                        <span class="status-group-arrow">&#9660;</span>
+                    </div>
+                </div>
+                <div class="status-group-items">
+                    ${groupItems.map(item => {
+                        const desc = isIncome ? (item.source || item.category || '-') : (item.description || item.category || '-');
+                        const isPaid = item.status === 'Pg';
+                        return `<div class="mobile-item">
+                            <div class="mobile-item-info">
+                                <div class="mobile-item-top">
+                                    <span class="mobile-item-desc">${desc}</span>
+                                    <span class="mobile-item-value" style="color:${valueColor}">${currency(item.value)}</span>
+                                </div>
+                                <div class="mobile-item-bottom">
+                                    <span class="mobile-item-meta">${dateStr(item.date)}</span>
+                                    <span class="mobile-item-meta">${item.category || ''}</span>
+                                    <span class="mobile-item-meta">${item.bank || ''}</span>
+                                </div>
+                            </div>
+                            <button class="mobile-item-action${isPaid ? ' confirmed' : ''}" onclick="App.${toggleFn}('${item.id}')">
+                                ${isPaid ? '✓ ' + doneLabel : actionLabel}
+                            </button>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+        }
+
+        container.innerHTML =
+            renderGroup('Atrasadas', overdue, 'overdue', true) +
+            renderGroup('Vencendo esta semana', thisWeek, 'week', true) +
+            renderGroup('Pendentes', pending, 'pending', false) +
+            renderGroup(doneLabel + 's', done, 'done', false) ||
+            `<div class="empty-state"><div class="empty-state-icon">—</div><div class="empty-state-desc">Nenhum lançamento neste mês</div></div>`;
     }
 
     // ============================================================
@@ -543,6 +623,9 @@
         $('expPendingCard').textContent = currency(pendingExp);
         $('expFixoCard').textContent = currency(fixo);
         $('expVarCard').textContent = currency(variavel);
+
+        // Mobile cards view
+        renderMobileCards('expense', expenses);
     }
 
     function populateSelect(el, options, placeholder) {
