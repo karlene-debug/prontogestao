@@ -1017,16 +1017,60 @@ th.actions-header {
 /* ---- SUMMARY CARDS SMALL ---- */
 .summary-cards-sm {
     margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 .summary-cards-sm .summary-card {
-    padding: 16px 20px;
+    padding: 14px 16px;
 }
 .summary-cards-sm .card-value {
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: -0.5px;
+}
+.summary-cards-sm .card-label {
+    font-size: 10px;
 }
 
 /* ---- TABLE FILTERS ---- */
+.filters-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+.filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+}
+.filters-header:hover { background: var(--bg-hover); }
+.filters-header-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.filters-header-icon {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+}
+.filters-header-icon.open { transform: rotate(180deg); }
+.filters-body {
+    padding: 0 16px 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.filters-body.collapsed {
+    display: none;
+}
 .table-filters {
     display: flex;
     gap: 8px;
@@ -1352,11 +1396,16 @@ th.actions-header {
     .onboarding-card { padding: 32px 24px; }
     .settings-row { flex-direction: column; align-items: flex-start; }
     .settings-row .btn-secondary { align-self: flex-start; }
-    .summary-cards-sm { grid-template-columns: repeat(2, 1fr); }
+    .summary-cards-sm { grid-template-columns: repeat(3, 1fr); }
+    .summary-cards-sm .summary-card { padding: 10px 12px; }
+    .summary-cards-sm .card-value { font-size: 16px; }
+    .summary-cards-sm .card-label { font-size: 9px; }
     .bulk-actions { flex-direction: column; }
     .bulk-right { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
     .evolution-chart { grid-template-columns: repeat(3, 1fr); }
     .fluxo-chart-row { grid-template-columns: 50px 1fr 1fr 50px; font-size: 11px; }
+    .filters-body { flex-direction: column; }
+    .filters-body .filter-select { width: 100%; }
 }
 
 @media (max-width: 480px) {

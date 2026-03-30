@@ -601,28 +601,14 @@
     // ============================================================
     function renderMembros() {
         const members = getMembers();
-        const incomes = filterByMonth(getIncomes(), 'date');
-        const expenses = filterByMonth(getExpenses(), 'date');
 
         $('membersGrid').innerHTML = members.map(m => {
-            const mIncome = incomes.filter(i => i.memberId === m.id).reduce((s, i) => s + Number(i.value), 0);
-            const mExpense = expenses.filter(e => e.memberId === m.id).reduce((s, e) => s + Number(e.value), 0);
             const initial = m.name.charAt(0).toUpperCase();
 
             return `<div class="member-card">
                 <div class="member-avatar" style="background:${m.color}">${initial}</div>
                 <div class="member-name">${m.name}</div>
                 <div class="member-role">${m.role || ''}</div>
-                <div class="member-stats">
-                    <div class="member-stat">
-                        <span class="stat-label">Receitas</span>
-                        <span class="stat-value income">${currency(mIncome)}</span>
-                    </div>
-                    <div class="member-stat">
-                        <span class="stat-label">Despesas</span>
-                        <span class="stat-value expense">${currency(mExpense)}</span>
-                    </div>
-                </div>
                 <div class="member-actions">
                     <button class="btn-secondary" onclick="App.editMember('${m.id}')">Editar</button>
                     <button class="btn-secondary" onclick="App.deleteMember('${m.id}')">Remover</button>
@@ -959,8 +945,8 @@
             </div>
             <div class="form-row" id="dateRow">
                 <div class="form-group">
-                    <label>Data</label>
-                    <input type="date" id="fIncDate" value="${i.date || ''}">
+                    <label>Data${isGenerated ? ' (gerada)' : ''}</label>
+                    <input type="date" id="fIncDate" value="${i.date || ''}" ${isGenerated ? 'readonly style="opacity:0.6"' : ''}>
                 </div>
                 <div class="form-group">
                     <label>Banco</label>
@@ -997,7 +983,12 @@
                     </select>
                 </div>
             </div>
-            ${isGenerated ? '<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Este lançamento foi gerado automaticamente. Edite apenas valor e status.</p>' : ''}
+            ${isGenerated ? `<div style="margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted)">
+                Este lançamento faz parte de uma recorrência.
+                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;color:var(--text-primary);font-size:13px">
+                    <input type="checkbox" id="fIncApplyAll"> Aplicar alteração em todos os meses
+                </label>
+            </div>` : ''}
         `;
 
         openModal(isEdit ? 'Editar Entrada' : 'Nova Entrada', body, () => {
@@ -1030,17 +1021,15 @@
                     const parentId = i.recurrenceParent;
                     if (parentId && isEdit) {
                         const siblings = items.filter(x => x.recurrenceParent === parentId && x.id !== data.id);
-                        if (siblings.length > 0) {
-                            const applyAll = confirm('Essa entrada faz parte de uma recorrência.\n\nAplicar a alteração em TODAS?\n\n• OK = Alterar todas\n• Cancelar = Alterar só esta');
-                            if (applyAll) {
-                                siblings.forEach(sib => {
-                                    sib.value = data.value;
-                                    sib.bank = data.bank;
-                                    sib.category = data.category;
-                                    sib.source = data.source;
-                                    sib.memberId = data.memberId;
-                                });
-                            }
+                        const applyAllEl = document.getElementById('fIncApplyAll');
+                        if (siblings.length > 0 && applyAllEl && applyAllEl.checked) {
+                            siblings.forEach(sib => {
+                                sib.value = data.value;
+                                sib.bank = data.bank;
+                                sib.category = data.category;
+                                sib.source = data.source;
+                                sib.memberId = data.memberId;
+                            });
                         }
                     }
                     items[idx] = data;
@@ -1062,17 +1051,18 @@
                 const recRow = $('recurrenceRow');
                 const instGroup = $('installmentGroup');
                 const dateRow = $('dateRow');
+                // Always show date when editing
+                dateRow.style.display = '';
                 if (v === 'recorrente') {
                     recRow.style.display = '';
                     instGroup.style.display = 'none';
-                    dateRow.style.display = 'none';
+                    if (!isEdit) dateRow.style.display = 'none';
                 } else if (v === 'parcelada') {
                     recRow.style.display = '';
                     instGroup.style.display = '';
-                    dateRow.style.display = 'none';
+                    if (!isEdit) dateRow.style.display = 'none';
                 } else {
                     recRow.style.display = 'none';
-                    dateRow.style.display = '';
                 }
             }
 
@@ -1194,7 +1184,12 @@
                     </select>
                 </div>
             </div>
-            ${isGeneratedInstallment ? `<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">Parcela ${e.installments} - gerada automaticamente. Edite valor e status.</p>` : ''}
+            ${isGeneratedInstallment ? `<div style="margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:12px;color:var(--text-muted)">
+                ${e.recurrenceType === 'recorrente' ? 'Este lançamento faz parte de uma recorrência.' : `Parcela ${e.installments} - gerada automaticamente.`}
+                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;color:var(--text-primary);font-size:13px">
+                    <input type="checkbox" id="fExpApplyAll"> Aplicar alteração em ${e.recurrenceType === 'recorrente' ? 'todos os meses' : 'todas as parcelas'}
+                </label>
+            </div>` : ''}
         `;
 
         openModal(isEdit ? 'Editar Saída' : 'Nova Saída', body, () => {
@@ -1232,19 +1227,16 @@
                     const parentId = e.installmentParent || e.recurrenceParent;
                     if (parentId && isEdit) {
                         const siblings = items.filter(x => (x.installmentParent === parentId || x.recurrenceParent === parentId) && x.id !== data.id);
-                        if (siblings.length > 0) {
-                            const label = e.recurrenceType === 'recorrente' ? 'recorrência' : 'parcelamento';
-                            const applyAll = confirm(`Essa saída faz parte de um ${label}.\n\nAplicar a alteração em TODAS?\n\n• OK = Alterar todas\n• Cancelar = Alterar só esta`);
-                            if (applyAll) {
-                                siblings.forEach(sib => {
-                                    sib.value = data.value;
-                                    sib.bank = data.bank;
-                                    sib.paymentType = data.paymentType;
-                                    sib.category = data.category;
-                                    sib.description = data.description;
-                                    sib.memberId = data.memberId;
-                                });
-                            }
+                        const applyAllEl = document.getElementById('fExpApplyAll');
+                        if (siblings.length > 0 && applyAllEl && applyAllEl.checked) {
+                            siblings.forEach(sib => {
+                                sib.value = data.value;
+                                sib.bank = data.bank;
+                                sib.paymentType = data.paymentType;
+                                sib.category = data.category;
+                                sib.description = data.description;
+                                sib.memberId = data.memberId;
+                            });
                         }
                     }
                     items[idx] = data;
