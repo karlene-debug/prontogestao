@@ -1363,6 +1363,7 @@
             function updateCardInfo() {
                 const bankEl = $('fExpBank');
                 const payEl = $('fExpPayment');
+                const dateEl = $('fExpDate');
                 const infoEl = $('fExpCardInfo');
                 if (!bankEl || !payEl || !infoEl) return;
                 const bank = bankEl.value;
@@ -1370,8 +1371,22 @@
                 if (pay === 'Crédito' && bank) {
                     const card = getCards().find(c => c.bank === bank);
                     if (card) {
+                        const purchaseDate = dateEl.value ? new Date(dateEl.value + 'T00:00:00') : new Date();
+                        const day = purchaseDate.getDate();
+                        let faturaMonth = purchaseDate.getMonth();
+                        let faturaYear = purchaseDate.getFullYear();
+                        // Se compra depois do fechamento, cai na fatura do mês seguinte
+                        if (day > card.closeDay) {
+                            faturaMonth++;
+                            if (faturaMonth > 11) { faturaMonth = 0; faturaYear++; }
+                        }
+                        const faturaLabel = MONTH_NAMES[faturaMonth] + '/' + faturaYear;
+                        const dueDate = String(card.dueDay).padStart(2, '0') + '/' + String(faturaMonth + 1).padStart(2, '0') + '/' + faturaYear;
                         infoEl.style.display = '';
-                        infoEl.innerHTML = `<strong>${bank}</strong> — Fatura fecha dia <strong>${card.closeDay}</strong>, vence dia <strong>${card.dueDay}</strong>`;
+                        infoEl.innerHTML = `<strong>${bank}</strong><br>
+                            Fatura: <strong>${faturaLabel}</strong> (abre dia ${card.openDay || '?'}, fecha dia ${card.closeDay})<br>
+                            Pagamento: <strong>${dueDate}</strong>
+                            <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">A compra do dia ${day} ${day > card.closeDay ? 'caiu na próxima fatura' : 'entra nesta fatura'}. Se não estiver certo, altere a data da compra.</div>`;
                     } else {
                         infoEl.style.display = '';
                         infoEl.innerHTML = `Cartão "${bank}" não cadastrado. <a href="#" onclick="App.navigate('configuracoes');return false" style="color:var(--text-primary);text-decoration:underline">Cadastrar nas Configurações</a>`;
@@ -1382,8 +1397,10 @@
             }
             const bankEl = $('fExpBank');
             const payEl = $('fExpPayment');
+            const dateEl = $('fExpDate');
             if (bankEl) bankEl.addEventListener('change', updateCardInfo);
             if (payEl) payEl.addEventListener('change', updateCardInfo);
+            if (dateEl) dateEl.addEventListener('change', updateCardInfo);
             updateCardInfo();
         }, 50);
     }
@@ -2016,7 +2033,7 @@
             <div class="settings-row" style="padding:10px 0">
                 <div class="settings-row-info">
                     <span class="settings-row-label">${c.bank}</span>
-                    <span class="settings-row-desc">Fecha dia ${c.closeDay} · Vence dia ${c.dueDay}</span>
+                    <span class="settings-row-desc">Abre dia ${c.openDay || '?'} · Fecha dia ${c.closeDay} · Paga dia ${c.dueDay}</span>
                 </div>
                 <button class="btn-action danger" onclick="App.removeCard('${c.id}')">Remover</button>
             </div>
@@ -2111,23 +2128,29 @@
                             ${BANKS.map(b => `<option value="${b}">${b}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Dia do Fechamento</label>
-                            <input type="number" min="1" max="31" id="fCardClose" placeholder="Ex: 15">
-                        </div>
-                        <div class="form-group">
-                            <label>Dia do Vencimento</label>
-                            <input type="number" min="1" max="31" id="fCardDue" placeholder="Ex: 5">
-                        </div>
+                    <div class="form-group">
+                        <label>Dia da Abertura da Fatura</label>
+                        <input type="number" min="1" max="31" id="fCardOpen" placeholder="Ex: 1">
+                        <span style="font-size:11px;color:var(--text-muted)">Primeiro dia que compras entram nesta fatura</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Dia do Fechamento da Fatura</label>
+                        <input type="number" min="1" max="31" id="fCardClose" placeholder="Ex: 30">
+                        <span style="font-size:11px;color:var(--text-muted)">Último dia que compras entram nesta fatura</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Dia do Pagamento da Fatura</label>
+                        <input type="number" min="1" max="31" id="fCardDue" placeholder="Ex: 4">
+                        <span style="font-size:11px;color:var(--text-muted)">Data de vencimento/pagamento</span>
                     </div>
                 `, () => {
                     const bank = $('fCardBank').value;
+                    const openDay = parseInt($('fCardOpen').value);
                     const closeDay = parseInt($('fCardClose').value);
                     const dueDay = parseInt($('fCardDue').value);
-                    if (!closeDay || !dueDay) { toast('Informe os dias de fechamento e vencimento.', 'error'); return false; }
+                    if (!openDay || !closeDay || !dueDay) { toast('Informe abertura, fechamento e pagamento.', 'error'); return false; }
                     const cards = getCards();
-                    cards.push({ id: uid(), bank, closeDay, dueDay });
+                    cards.push({ id: uid(), bank, openDay, closeDay, dueDay });
                     save(KEYS.cards, cards);
                     toast('Cartão adicionado!');
                     renderCardSettings();
