@@ -502,12 +502,17 @@
             ${sortHeader('expenses', 'installments', 'Parcelas')}
             ${sortHeader('expenses', 'description', 'Estabelecimento')}
             ${sortHeader('expenses', 'category', 'Plano de Contas')}
+            ${sortHeader('expenses', 'recurrenceType', 'Tipo')}
             <th class="actions-header">Ações</th>
         </tr>`;
 
         $('expenseTable').innerHTML = expenses.map(e => {
             const member = members.find(m => m.id === e.memberId);
             const checked = state.selectedExpenses && state.selectedExpenses.has(e.id) ? 'checked' : '';
+            const recType = e.recurrenceType || (e.installments ? 'parcelada' : 'avulsa');
+            const typeLabel = recType === 'recorrente' ? '<span class="rec-badge recorrente">Recorrente</span>'
+                : recType === 'parcelada' ? `<span class="rec-badge parcelada">${e.installments || 'Parcelada'}</span>`
+                : '<span class="rec-badge avulsa">Avulsa</span>';
             return `<tr class="${e.status === 'Pg' ? 'row-paid' : ''}">
                 <td><input type="checkbox" class="exp-checkbox exp-row-check" data-id="${e.id}" ${checked} onchange="App.updateBulkCount()"></td>
                 <td>${e.bank || '-'}</td>
@@ -517,6 +522,7 @@
                 <td>${e.installments || '-'}</td>
                 <td>${e.description || '-'}</td>
                 <td>${e.category || '-'}</td>
+                <td>${typeLabel}</td>
                 <td class="actions-cell">
                     <button class="btn-status ${e.status === 'Pg' ? 'confirmed' : ''}" onclick="App.toggleExpenseStatus('${e.id}')">
                         ${e.status === 'Pg' ? '&#10003; Pago' : '&#9711; Pagar'}
@@ -525,7 +531,7 @@
                     <button class="btn-action danger" onclick="App.deleteExpense('${e.id}')">Excluir</button>
                 </td>
             </tr>`;
-        }).join('') || `<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">\u{1F4CB}</div><div class="empty-state-title">Nenhuma saída neste mês</div><div class="empty-state-desc">Adicione suas despesas clicando em "+ Nova Saída"</div></div></td></tr>`;
+        }).join('') || `<tr><td colspan="11"><div class="empty-state"><div class="empty-state-icon">\u{1F4CB}</div><div class="empty-state-title">Nenhuma saída neste mês</div><div class="empty-state-desc">Adicione suas despesas clicando em "+ Nova Saída"</div></div></td></tr>`;
 
         // Summary cards
         const paid = expenses.filter(e => e.status === 'Pg').reduce((s, e) => s + Number(e.value), 0);
@@ -1155,13 +1161,14 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Parcelado?</label>
-                    <select id="fExpIsInstallment" ${isGeneratedInstallment ? 'disabled' : ''}>
-                        <option value="nao" ${!e.installments ? 'selected' : ''}>Não (à vista)</option>
-                        <option value="sim" ${e.installments ? 'selected' : ''}>Sim, parcelado</option>
+                    <label>Tipo</label>
+                    <select id="fExpRecType" ${isGeneratedInstallment ? 'disabled' : ''}>
+                        <option value="avulsa" ${(!e.recurrenceType || e.recurrenceType === 'avulsa') && !e.installments ? 'selected' : ''}>Avulsa (única)</option>
+                        <option value="recorrente" ${e.recurrenceType === 'recorrente' ? 'selected' : ''}>Recorrente (todo mês)</option>
+                        <option value="parcelada" ${e.recurrenceType === 'parcelada' || e.installments ? 'selected' : ''}>Parcelada (X vezes)</option>
                     </select>
                 </div>
-                <div class="form-group" id="installmentCountGroup" style="${e.installments ? '' : 'display:none'}">
+                <div class="form-group" id="installmentCountGroup" style="${(e.installments || e.recurrenceType === 'parcelada') ? '' : 'display:none'}">
                     <label>Quantidade de Parcelas</label>
                     <input type="number" min="2" max="72" id="fExpInstallCount" value="${e.installments ? e.installments.split('/')[1] || '' : ''}" placeholder="Ex: 10" ${isGeneratedInstallment ? 'disabled' : ''}>
                 </div>
@@ -1185,7 +1192,7 @@
         `;
 
         openModal(isEdit ? 'Editar Saída' : 'Nova Saída', body, () => {
-            const isInstallment = $('fExpIsInstallment').value === 'sim';
+            const recType = $('fExpRecType').value;
             const installCount = parseInt($('fExpInstallCount').value) || 0;
 
             const data = {
@@ -1195,24 +1202,29 @@
                 bank: $('fExpBank').value,
                 paymentType: $('fExpPayment').value,
                 category: $('fExpCat').value,
-                installments: isInstallment && installCount > 1 ? `1/${installCount}` : '',
+                installments: recType === 'parcelada' && installCount > 1 ? `1/${installCount}` : '',
                 description: $('fExpDesc').value,
                 memberId: $('fExpMember').value,
                 status: $('fExpStatus').value,
                 installmentParent: e.installmentParent || null,
+                recurrenceType: recType,
+                recurrenceParent: e.recurrenceParent || null,
             };
 
-            if (!isEdit && isInstallment && installCount > 1) {
+            if (!isEdit && recType === 'recorrente') {
+                generateRecurrentExpenses(data);
+            } else if (!isEdit && recType === 'parcelada' && installCount > 1) {
                 generateInstallmentExpenses(data, installCount);
             } else {
                 const items = getExpenses();
                 const idx = items.findIndex(x => x.id === data.id);
                 if (idx >= 0) {
-                    const parentId = e.installmentParent;
+                    const parentId = e.installmentParent || e.recurrenceParent;
                     if (parentId && isEdit) {
-                        const siblings = items.filter(x => x.installmentParent === parentId && x.id !== data.id);
+                        const siblings = items.filter(x => (x.installmentParent === parentId || x.recurrenceParent === parentId) && x.id !== data.id);
                         if (siblings.length > 0) {
-                            const applyAll = confirm('Essa saída faz parte de um parcelamento.\n\nAplicar a alteração em TODAS as parcelas?\n\n• OK = Alterar todas\n• Cancelar = Alterar só esta');
+                            const label = e.recurrenceType === 'recorrente' ? 'recorrência' : 'parcelamento';
+                            const applyAll = confirm(`Essa saída faz parte de um ${label}.\n\nAplicar a alteração em TODAS?\n\n• OK = Alterar todas\n• Cancelar = Alterar só esta`);
                             if (applyAll) {
                                 siblings.forEach(sib => {
                                     sib.value = data.value;
@@ -1236,10 +1248,10 @@
 
         // Toggle installment field
         setTimeout(() => {
-            const sel = $('fExpIsInstallment');
+            const sel = $('fExpRecType');
             if (!sel) return;
             sel.addEventListener('change', () => {
-                $('installmentCountGroup').style.display = sel.value === 'sim' ? '' : 'none';
+                $('installmentCountGroup').style.display = sel.value === 'parcelada' ? '' : 'none';
             });
         }, 50);
     }
@@ -1274,6 +1286,40 @@
         }
         save(KEYS.expenses, items);
         toast(state.editingId ? 'Saída atualizada' : 'Saída adicionada');
+    }
+
+    // --- Generate Recurrent Expenses (12 months) ---
+    function generateRecurrentExpenses(data) {
+        const items = getExpenses();
+        const parentId = uid();
+        const baseDate = new Date(data.date + 'T00:00:00');
+        const day = baseDate.getDate();
+
+        for (let i = 0; i < 12; i++) {
+            let m = baseDate.getMonth() + i;
+            let y = baseDate.getFullYear();
+            while (m > 11) { m -= 12; y++; }
+            const mm = String(m + 1).padStart(2, '0');
+            const dd = String(Math.min(day, 28)).padStart(2, '0');
+
+            items.push({
+                id: uid(),
+                date: `${y}-${mm}-${dd}`,
+                value: data.value,
+                bank: data.bank,
+                paymentType: data.paymentType,
+                category: data.category,
+                installments: '',
+                description: data.description,
+                memberId: data.memberId,
+                status: i === 0 ? data.status : '',
+                installmentParent: parentId,
+                recurrenceType: 'recorrente',
+                recurrenceParent: parentId,
+            });
+        }
+        save(KEYS.expenses, items);
+        toast('Saída recorrente adicionada (12 meses)');
     }
 
     // --- Member Modal ---
