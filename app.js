@@ -36,6 +36,18 @@
         return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     function pct(part, total) { return total === 0 ? 0 : Math.round((part / total) * 100); }
+    // --- Toast Notification ---
+    function toast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const icons = { success: '\u2713', error: '\u2717', info: '\u2139' };
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `<span class="toast-icon">${icons[type] || ''}</span><span>${message}</span>`;
+        container.appendChild(el);
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 3200);
+    }
+
     function parseValue(input) {
         if (!input) return 0;
         const cleaned = String(input).replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
@@ -423,7 +435,7 @@
                     <button class="btn-action danger" onclick="App.deleteIncome('${i.id}')">Excluir</button>
                 </td>
             </tr>`;
-        }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma entrada neste mês</td></tr>';
+        }).join('') || `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">\u{1F4B0}</div><div class="empty-state-title">Nenhuma entrada neste mês</div><div class="empty-state-desc">Adicione suas receitas clicando em "+ Nova Entrada"</div></div></td></tr>`;
 
         // Summary cards
         $('incTotalCard').textContent = currency(total);
@@ -513,7 +525,7 @@
                     <button class="btn-action danger" onclick="App.deleteExpense('${e.id}')">Excluir</button>
                 </td>
             </tr>`;
-        }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma saída neste mês</td></tr>';
+        }).join('') || `<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">\u{1F4CB}</div><div class="empty-state-title">Nenhuma saída neste mês</div><div class="empty-state-desc">Adicione suas despesas clicando em "+ Nova Saída"</div></div></td></tr>`;
 
         // Summary cards
         const paid = expenses.filter(e => e.status === 'Pg').reduce((s, e) => s + Number(e.value), 0);
@@ -639,7 +651,7 @@
                 <td style="color:${used ? 'var(--income)' : 'var(--text-muted)'}">${used ? 'Sim' : '-'}</td>
                 <td>${isCustom ? `<button class="btn-action danger" onclick="App.deleteCategory('${c.name}')">Excluir</button>` : ''}</td>
             </tr>`;
-        }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px">Nenhuma categoria com uso. Ative "Mostrar zeradas" para ver todas.</td></tr>';
+        }).join('') || `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">\u{1F4CA}</div><div class="empty-state-title">Nenhuma categoria com uso</div><div class="empty-state-desc">Ative "Mostrar zeradas" para ver todas as categorias</div></div></td></tr>`;
 
         // Budget inputs - only used categories
         const budgets = getBudgets();
@@ -696,7 +708,7 @@
             const name = $('fCatName').value.trim();
             if (!name) return;
             const existing = getAllCategories().find(c => c.name.toLowerCase() === name.toLowerCase());
-            if (existing) { alert('Já existe uma conta com esse nome.'); return; }
+            if (existing) { toast('Já existe uma conta com esse nome.', 'error'); return; }
 
             const cat = {
                 name: name,
@@ -1089,6 +1101,7 @@
             });
         }
         save(KEYS.incomes, items);
+        toast(state.editingId ? 'Entrada atualizada' : 'Entrada adicionada');
     }
 
     // --- Expense Modal ---
@@ -1258,6 +1271,7 @@
             });
         }
         save(KEYS.expenses, items);
+        toast(state.editingId ? 'Saída atualizada' : 'Saída adicionada');
     }
 
     // --- Member Modal ---
@@ -1360,6 +1374,7 @@
                     const deleteAll = confirm('Essa entrada faz parte de uma recorrência.\n\nExcluir TODAS as parcelas?\n\n• OK = Excluir todas\n• Cancelar = Excluir só esta');
                     if (deleteAll) {
                         save(KEYS.incomes, items.filter(i => i.recurrenceParent !== item.recurrenceParent));
+                        toast('Entradas excluídas');
                         renderCurrentPage();
                         return;
                     }
@@ -1367,6 +1382,7 @@
             }
             if (!confirm('Excluir esta entrada?')) return;
             save(KEYS.incomes, items.filter(i => i.id !== id));
+            toast('Entrada excluída');
             renderCurrentPage();
         },
         duplicateIncome(id) {
@@ -1392,6 +1408,7 @@
                     const deleteAll = confirm('Essa saída faz parte de um parcelamento.\n\nExcluir TODAS as parcelas?\n\n• OK = Excluir todas\n• Cancelar = Excluir só esta');
                     if (deleteAll) {
                         save(KEYS.expenses, items.filter(e => e.installmentParent !== item.installmentParent));
+                        toast('Saídas excluídas');
                         renderCurrentPage();
                         return;
                     }
@@ -1399,6 +1416,7 @@
             }
             if (!confirm('Excluir esta saída?')) return;
             save(KEYS.expenses, items.filter(e => e.id !== id));
+            toast('Saída excluída');
             renderCurrentPage();
         },
         duplicateExpense(id) {
@@ -1416,7 +1434,7 @@
         },
         deleteMember(id) {
             const members = getMembers();
-            if (members.length <= 1) { alert('Precisa ter pelo menos 1 membro.'); return; }
+            if (members.length <= 1) { toast('Precisa ter pelo menos 1 membro.', 'error'); return; }
             if (!confirm('Remover este membro?')) return;
             save(KEYS.members, members.filter(m => m.id !== id));
             populateMemberFilter();
@@ -1431,7 +1449,7 @@
         },
         deleteCategory(name) {
             const customs = getCustomCategories();
-            if (!customs.find(c => c.name === name)) { alert('Só é possível excluir contas customizadas.'); return; }
+            if (!customs.find(c => c.name === name)) { toast('Só é possível excluir contas customizadas.', 'error'); return; }
             if (!confirm(`Excluir a conta "${name}"?`)) return;
             save(KEYS.customCategories, customs.filter(c => c.name !== name));
             renderPlanejamento();
@@ -1473,7 +1491,7 @@
             }
         },
         bulkPaySelected() {
-            if (state.selectedExpenses.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            if (state.selectedExpenses.size === 0) { toast('Selecione pelo menos um item.', 'info'); return; }
             const items = getExpenses();
             items.forEach(e => { if (state.selectedExpenses.has(e.id)) e.status = 'Pg'; });
             save(KEYS.expenses, items);
@@ -1481,7 +1499,7 @@
             renderSaidas();
         },
         bulkUnpaySelected() {
-            if (state.selectedExpenses.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            if (state.selectedExpenses.size === 0) { toast('Selecione pelo menos um item.', 'info'); return; }
             const items = getExpenses();
             items.forEach(e => { if (state.selectedExpenses.has(e.id)) e.status = ''; });
             save(KEYS.expenses, items);
@@ -1516,7 +1534,7 @@
             }
         },
         bulkReceiveSelected() {
-            if (state.selectedIncomes.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            if (state.selectedIncomes.size === 0) { toast('Selecione pelo menos um item.', 'info'); return; }
             const items = getIncomes();
             items.forEach(i => { if (state.selectedIncomes.has(i.id)) i.status = 'Pg'; });
             save(KEYS.incomes, items);
@@ -1524,7 +1542,7 @@
             renderEntradas();
         },
         bulkUnreceiveSelected() {
-            if (state.selectedIncomes.size === 0) { alert('Selecione pelo menos um item.'); return; }
+            if (state.selectedIncomes.size === 0) { toast('Selecione pelo menos um item.', 'info'); return; }
             const items = getIncomes();
             items.forEach(i => { if (state.selectedIncomes.has(i.id)) i.status = ''; });
             save(KEYS.incomes, items);
@@ -1545,7 +1563,7 @@
         conferirFatura() {
             const valor = parseValue($('faturaValor').value);
             const banco = $('faturaBanco').value;
-            if (!valor || !banco) { alert('Informe o valor e o banco da fatura.'); return; }
+            if (!valor || !banco) { toast('Informe o valor e o banco da fatura.', 'error'); return; }
 
             const items = getExpenses();
             const monthItems = filterByMember(filterByMonth(items, 'date'));
